@@ -81,6 +81,9 @@ export const authConfig: NextAuthConfig = {
   trustHost: true,
   pages: {
     signIn: "/login",
+    // En cas d'erreur (ex. base injoignable), on renvoie vers le portail
+    // d'accueil avec un message lisible plutôt que la page d'erreur brute.
+    error: "/",
   },
   providers,
   callbacks: {
