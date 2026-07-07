@@ -107,6 +107,11 @@ export default function GameClient() {
         flash("Connecte-toi pour poser un pixel.");
         return;
       }
+      // Case déjà occupée : verrouillée (l'admin peut passer outre).
+      if (!me.isAdmin && pixelsRef.current.has(keyOf(x, y))) {
+        flash("Cette case est déjà occupée.");
+        return;
+      }
       setBusy(true);
       try {
         const r = await fetch("/api/pixels/place", {

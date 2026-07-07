@@ -72,10 +72,11 @@ export async function POST(req: Request) {
       const admin = isAdminUser(dbUser);
 
       const existing = await tx.pixel.findUnique({ where: { x_y: { x, y } } });
-      const isMine = existing?.ownerId === dbUser.id;
 
-      if (existing && !isMine && !admin) {
-        throw new PlaceError(409, "Ce pixel est déjà occupé par un autre joueur.");
+      // Une case déjà occupée est verrouillée (même pour son propriétaire).
+      // Seul l'administrateur peut poser par-dessus.
+      if (existing && !admin) {
+        throw new PlaceError(409, "Cette case est déjà occupée. Choisis une case libre.");
       }
 
       // Pixel doré (item) : remplace le coût en crédit.
