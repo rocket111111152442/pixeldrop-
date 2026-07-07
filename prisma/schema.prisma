@@ -1,0 +1,130 @@
+// PixelDrop — schéma de base de données
+// Prod: PostgreSQL (Neon / Supabase / Vercel Postgres) via l'adaptateur pg.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+//  Auth.js (NextAuth v5)
+// ─────────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+
+  // Profil de jeu
+  pseudo    String  @unique @default(cuid())
+  isAdmin   Boolean @default(false)
+  banned    Boolean @default(false)
+
+  // Économie
+  credits       Int     @default(10) // 10 pixels offerts au départ
+  freeGranted   Boolean @default(true) // les 10 crédits initiaux sont "gratuits"
+  totalPlaced   Int     @default(0)
+  totalSpentCts Int     @default(0) // total dépensé en centimes (CHF)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  pixels    Pixel[]
+  purchases Purchase[]
+  items     InventoryItem[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+//  Jeu
+// ─────────────────────────────────────────────
+
+model Pixel {
+  id        String   @id @default(cuid())
+  x         Int
+  y         Int
+  color     String // hex "#RRGGBB"
+  link      String? // URL optionnelle attachée au pixel
+  text      String? // message optionnel (max ~140 car.)
+  shielded  Boolean  @default(false) // protégé contre les bombes
+  golden    Boolean  @default(false) // pixel doré (cosmétique animé)
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([x, y])
+  @@index([updatedAt])
+  @@index([ownerId])
+}
+
+model Purchase {
+  id              String   @id @default(cuid())
+  userId          String
+  sku             String // référence produit (voir src/lib/products.ts)
+  label           String
+  amountCts       Int // montant payé, en centimes CHF
+  creditsGranted  Int      @default(0)
+  itemsGranted    Int      @default(0)
+  stripeSessionId String?  @unique
+  status          String   @default("pending") // pending | paid | canceled
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Inventaire d'items consommables (bombes, boucliers, etc.)
+model InventoryItem {
+  id       String @id @default(cuid())
+  userId   String
+  sku      String // ex: "bomb", "mega_bomb", "shield", "golden"
+  quantity Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sku])
+}

@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0b0f1a;
+  --panel: #131a2b;
+  --panel-2: #1b2540;
+  --border: #2a3350;
+  --text: #e7ecff;
+  --muted: #8b96b8;
+  --accent: #6b8cff;
+  --accent-2: #b06bff;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overscroll-behavior: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pd-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.pd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 600;
+  transition: filter 0.15s, transform 0.05s;
+}
+.pd-btn:hover {
+  filter: brightness(1.15);
+}
+.pd-btn:active {
+  transform: translateY(1px);
+}
+.pd-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pd-btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  color: #fff;
+}
+
+.pd-btn-google {
+  background: #fff;
+  color: #1f1f1f;
+  border-color: #dadce0;
+}
+
+.pd-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0e1424;
+  color: var(--text);
+  outline: none;
+}
+.pd-input:focus {
+  border-color: var(--accent);
+}
+
+.canvas-wrap {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  background-color: #101626;
+}
+
+canvas.pd-canvas {
+  image-rendering: pixelated;
+  display: block;
+}
+
+@keyframes goldenGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 1px rgba(255, 210, 80, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 12px 3px rgba(255, 230, 140, 1);
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  z-index: 60;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast.error {
+  border-color: #ff5c7a;
+  color: #ffd5dd;
+}
+.toast.success {
+  border-color: #37d67a;
+}
