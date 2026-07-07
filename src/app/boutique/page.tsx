@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PRODUCTS, type Product } from "@/lib/products";
 
-const CHF = (cts: number) => (cts / 100).toFixed(2) + " CHF";
+const EUR = (cts: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(cts / 100);
 
 export default function BoutiquePage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -92,7 +93,7 @@ function Card({ p, pending, disabled, onBuy }: { p: Product; pending: boolean; d
       <div style={{ fontSize: 34 }}>{p.emoji}</div>
       <div style={{ fontWeight: 700 }}>{p.label}</div>
       <div style={{ color: "var(--muted)", fontSize: 13, flex: 1 }}>{p.description}</div>
-      <div style={{ fontSize: 20, fontWeight: 800 }}>{CHF(p.amountCts)}</div>
+      <div style={{ fontSize: 20, fontWeight: 800 }}>{EUR(p.amountCts)}</div>
       <button className="pd-btn pd-btn-primary" disabled={disabled || pending} onClick={onBuy}>
         {pending ? "Redirection…" : "Acheter"}
       </button>

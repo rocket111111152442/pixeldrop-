@@ -229,7 +229,7 @@ export default function GameClient() {
         <div className="pd-panel" style={{ padding: "10px 14px", pointerEvents: "auto" }}>
           <div style={{ fontWeight: 800, fontSize: 18 }}>🟦 PixelDrop</div>
           <div style={{ color: "var(--muted)", fontSize: 12 }}>
-            {count.toLocaleString("fr-CH")} / {(GRID_WIDTH * GRID_HEIGHT).toLocaleString("fr-CH")} pixels posés
+            {count.toLocaleString("fr-FR")} / {(GRID_WIDTH * GRID_HEIGHT).toLocaleString("fr-FR")} pixels posés
           </div>
         </div>
 

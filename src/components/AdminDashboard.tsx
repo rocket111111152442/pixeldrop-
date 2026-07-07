@@ -27,7 +27,8 @@ type Stats = {
   paidOrders: number;
 };
 
-const CHF = (cts: number) => (cts / 100).toFixed(2) + " CHF";
+const EUR = (cts: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(cts / 100);
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -105,9 +106,9 @@ export default function AdminDashboard() {
       {stats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, margin: "16px 0" }}>
           <StatCard label="Comptes" value={String(stats.userCount)} />
-          <StatCard label="Pixels posés" value={stats.pixelCount.toLocaleString("fr-CH")} />
+          <StatCard label="Pixels posés" value={stats.pixelCount.toLocaleString("fr-FR")} />
           <StatCard label="Remplissage" value={stats.fillPct.toFixed(3) + " %"} />
-          <StatCard label="Revenus" value={CHF(stats.revenueCts)} />
+          <StatCard label="Revenus" value={EUR(stats.revenueCts)} />
           <StatCard label="Commandes payées" value={String(stats.paidOrders)} />
         </div>
       )}
@@ -141,7 +142,7 @@ export default function AdminDashboard() {
                 <td style={td}>{u._count.pixels}</td>
                 <td style={td}>{u.credits}</td>
                 <td style={td}>{u.totalPlaced}</td>
-                <td style={td}>{CHF(u.totalSpentCts)}</td>
+                <td style={td}>{EUR(u.totalSpentCts)}</td>
                 <td style={td}>{u.banned ? <span style={{ color: "#ff8ba0" }}>banni</span> : "actif"}</td>
                 <td style={td}>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

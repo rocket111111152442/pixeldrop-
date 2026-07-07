@@ -38,7 +38,7 @@ Il te faut une base **PostgreSQL** (gratuit : [Neon](https://neon.tech),
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Compte admin (créé par le seed) |
 | `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Clés Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Secret du webhook Stripe |
-| `NEXT_PUBLIC_CURRENCY` | Devise (`chf` par défaut) |
+| `NEXT_PUBLIC_CURRENCY` | Devise (`eur` par défaut) |
 
 Les providers de connexion ne s'affichent que s'ils sont configurés. Le
 **compte email + mot de passe** fonctionne toujours, sans configuration externe.
@@ -76,7 +76,7 @@ configuration est simple.
 Les crédits/items sont accordés **par le webhook** après paiement confirmé.
 
 ### Grille tarifaire (modifiable dans `src/lib/products.ts`)
-- 10 px = 1.00 · 50 px = 4.50 · 100 px = 8.00 · 500 px = 35.00 · 1000 px = 60.00 CHF
+- 10 px = 1.00 · 50 px = 4.50 · 100 px = 8.00 · 500 px = 35.00 · 1000 px = 60.00 €
 - 💣 Bombe (0.50) · 💣×5 (2.00) · 💥 Méga-bombe (2.00) · 🛡️ Bouclier (1.00) · ⭐ Pixel doré (1.50)
 
 ---

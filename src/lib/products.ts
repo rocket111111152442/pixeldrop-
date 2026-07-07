@@ -1,5 +1,5 @@
 // Catalogue des produits achetables via Stripe.
-// Prix en centimes CHF. Le prix "de base" du pixel est 10 cts.
+// Prix en centimes d'euro. Le prix "de base" du pixel est 10 cts.
 // Les gros packs offrent un meilleur prix unitaire (dégressif).
 
 export type Product = {
@@ -8,7 +8,7 @@ export type Product = {
   label: string;
   description: string;
   emoji: string;
-  amountCts: number; // prix total du pack, en centimes CHF
+  amountCts: number; // prix total du pack, en centimes d'euro
   credits?: number; // nombre de pixels crédités (kind = "credits")
   itemSku?: string; // clé d'item d'inventaire (kind = "item")
   itemQty?: number; // quantité d'items accordée
@@ -21,7 +21,7 @@ export const PRODUCTS: Product[] = [
     sku: "credits_10",
     kind: "credits",
     label: "10 pixels",
-    description: "0.10 CHF / pixel",
+    description: "0.10 € / pixel",
     emoji: "🎨",
     amountCts: 100,
     credits: 10,
@@ -30,7 +30,7 @@ export const PRODUCTS: Product[] = [
     sku: "credits_50",
     kind: "credits",
     label: "50 pixels",
-    description: "0.09 CHF / pixel · -10%",
+    description: "0.09 € / pixel · -10%",
     emoji: "🖌️",
     amountCts: 450,
     credits: 50,
@@ -39,7 +39,7 @@ export const PRODUCTS: Product[] = [
     sku: "credits_100",
     kind: "credits",
     label: "100 pixels",
-    description: "0.08 CHF / pixel · -20%",
+    description: "0.08 € / pixel · -20%",
     emoji: "✨",
     amountCts: 800,
     credits: 100,
@@ -49,7 +49,7 @@ export const PRODUCTS: Product[] = [
     sku: "credits_500",
     kind: "credits",
     label: "500 pixels",
-    description: "0.07 CHF / pixel · -30%",
+    description: "0.07 € / pixel · -30%",
     emoji: "🚀",
     amountCts: 3500,
     credits: 500,
@@ -58,7 +58,7 @@ export const PRODUCTS: Product[] = [
     sku: "credits_1000",
     kind: "credits",
     label: "1000 pixels",
-    description: "0.06 CHF / pixel · -40%",
+    description: "0.06 € / pixel · -40%",
     emoji: "🏆",
     amountCts: 6000,
     credits: 1000,

@@ -30,7 +30,7 @@ model User {
   credits       Int     @default(10) // 10 pixels offerts au départ
   freeGranted   Boolean @default(true) // les 10 crédits initiaux sont "gratuits"
   totalPlaced   Int     @default(0)
-  totalSpentCts Int     @default(0) // total dépensé en centimes (CHF)
+  totalSpentCts Int     @default(0) // total dépensé en centimes (EUR)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -107,7 +107,7 @@ model Purchase {
   userId          String
   sku             String // référence produit (voir src/lib/products.ts)
   label           String
-  amountCts       Int // montant payé, en centimes CHF
+  amountCts       Int // montant payé, en centimes EUR
   creditsGranted  Int      @default(0)
   itemsGranted    Int      @default(0)
   stripeSessionId String?  @unique

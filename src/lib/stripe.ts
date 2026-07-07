@@ -14,4 +14,4 @@ export function getStripe(): Stripe {
   return cached;
 }
 
-export const CURRENCY = (process.env.NEXT_PUBLIC_CURRENCY || "chf").toLowerCase();
+export const CURRENCY = (process.env.NEXT_PUBLIC_CURRENCY || "eur").toLowerCase();
