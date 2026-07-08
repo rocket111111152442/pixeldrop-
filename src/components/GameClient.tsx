@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import PixelCanvas, { keyOf, type PixelMap } from "@/components/PixelCanvas";
 import { PALETTE, GRID_WIDTH, GRID_HEIGHT } from "@/lib/canvas-config";
+import { Logo } from "@/components/Logo";
 
 type Me = {
   authenticated: boolean;
@@ -232,7 +233,7 @@ export default function GameClient() {
         }}
       >
         <div className="pd-panel" style={{ padding: "10px 14px", pointerEvents: "auto" }}>
-          <div style={{ fontWeight: 800, fontSize: 18 }}>🟦 PixelDrop</div>
+          <Logo size={20} />
           <div style={{ color: "var(--muted)", fontSize: 12 }}>
             {count.toLocaleString("fr-FR")} / {(GRID_WIDTH * GRID_HEIGHT).toLocaleString("fr-FR")} pixels posés
           </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { PALETTE } from "@/lib/canvas-config";
 import { PRODUCTS } from "@/lib/products";
+import { Logo, LogoMark } from "@/components/Logo";
 
 const ERROR_LABELS: Record<string, string> = {
   Configuration:
@@ -54,7 +55,7 @@ export default function Landing() {
 
       {/* Barre du haut */}
       <header className="pd-nav">
-        <div className="pd-logo">🟦 PixelDrop</div>
+        <Logo size={28} />
         <div style={{ display: "flex", gap: 8 }}>
           <Link href="/login" className="pd-btn" style={{ textDecoration: "none" }}>
             Se connecter
@@ -216,7 +217,9 @@ export default function Landing() {
       </section>
 
       <footer className="pd-foot">
-        🟦 PixelDrop — pose ton pixel, raconte ton histoire.
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          <LogoMark size={18} /> PixelDrop — pose ton pixel, raconte ton histoire.
+        </span>
       </footer>
 
       <LandingStyles />

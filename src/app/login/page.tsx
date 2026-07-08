@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { Logo } from "@/components/Logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,8 +40,8 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20 }}>
       <div className="pd-panel" style={{ width: "min(94vw, 420px)", padding: 28 }}>
-        <Link href="/" style={{ textDecoration: "none", color: "inherit" }}>
-          <div style={{ fontSize: 26, fontWeight: 800, textAlign: "center" }}>🟦 PixelDrop</div>
+        <Link href="/" style={{ textDecoration: "none", color: "inherit", display: "flex", justifyContent: "center" }}>
+          <Logo size={34} />
         </Link>
         <p style={{ textAlign: "center", color: "var(--muted)", marginTop: 4, marginBottom: 22 }}>
           Connecte-toi et reçois 10 pixels gratuits.
