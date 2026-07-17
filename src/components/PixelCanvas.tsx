@@ -28,12 +28,15 @@ export default function PixelCanvas({
   selected,
   moveFrom,
   showGrid = true,
+  brush = false,
   focus,
   onCellAction,
   onTapSelect,
   onLongPress,
   onHoverCell,
   onViewChange,
+  onPaint,
+  onPaintEnd,
   onReady,
 }: {
   pixels: PixelMap;
@@ -43,12 +46,15 @@ export default function PixelCanvas({
   selected?: { x: number; y: number } | null;
   moveFrom?: { x: number; y: number } | null;
   showGrid?: boolean;
+  brush?: boolean;
   focus?: Focus | null;
   onCellAction: (x: number, y: number) => void;
   onTapSelect?: (x: number, y: number) => void;
   onLongPress?: (x: number, y: number) => void;
   onHoverCell?: (cell: { x: number; y: number } | null) => void;
   onViewChange?: (v: ViewInfo) => void;
+  onPaint?: (x: number, y: number) => void;
+  onPaintEnd?: () => void;
   onReady?: (el: HTMLCanvasElement) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -81,12 +87,18 @@ export default function PixelCanvas({
     fired: false,
   });
   const lastTapRef = useRef<{ t: number; x: number; y: number }>({ t: 0, x: 0, y: 0 });
+  // Mode pinceau : peinture continue au glisser.
+  const paintRef = useRef<{ active: boolean; lastX: number; lastY: number }>({
+    active: false,
+    lastX: -1,
+    lastY: -1,
+  });
 
   // Props accessibles depuis les handlers sans ré-abonnement.
-  const propsRef = useRef({ tool, previewColor, selected, moveFrom, showGrid });
-  propsRef.current = { tool, previewColor, selected, moveFrom, showGrid };
-  const cbRef = useRef({ onCellAction, onTapSelect, onLongPress, onHoverCell, onViewChange });
-  cbRef.current = { onCellAction, onTapSelect, onLongPress, onHoverCell, onViewChange };
+  const propsRef = useRef({ tool, previewColor, selected, moveFrom, showGrid, brush });
+  propsRef.current = { tool, previewColor, selected, moveFrom, showGrid, brush };
+  const cbRef = useRef({ onCellAction, onTapSelect, onLongPress, onHoverCell, onViewChange, onPaint, onPaintEnd });
+  cbRef.current = { onCellAction, onTapSelect, onLongPress, onHoverCell, onViewChange, onPaint, onPaintEnd };
 
   // ── Calque hors-écran (1 px = 1 cellule) + liste des pixels animés ──
   const rebuildOffscreen = useCallback(() => {
@@ -371,6 +383,25 @@ export default function PixelCanvas({
     const inside = (x: number, y: number) =>
       x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT;
 
+    // Trace une ligne de cellules (Bresenham) pour le pinceau (pas de trous).
+    const paintLine = (x0: number, y0: number, x1: number, y1: number) => {
+      const dx = Math.abs(x1 - x0);
+      const dy = Math.abs(y1 - y0);
+      const sx = x0 < x1 ? 1 : -1;
+      const sy = y0 < y1 ? 1 : -1;
+      let err = dx - dy;
+      let x = x0;
+      let y = y0;
+      let guard = 0;
+      while (guard++ < 5000) {
+        if (inside(x, y)) cbRef.current.onPaint?.(x, y);
+        if (x === x1 && y === y1) break;
+        const e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+      }
+    };
+
     const zoomAt = (px: number, py: number, factor: number) => {
       const v = viewRef.current;
       const worldX = (px - v.panX) / v.scale;
@@ -403,6 +434,10 @@ export default function PixelCanvas({
         // Début de pincement
         cancelLongPress();
         dragRef.current.active = false;
+        if (paintRef.current.active) {
+          paintRef.current.active = false;
+          cbRef.current.onPaintEnd?.();
+        }
         const pts = Array.from(pointersRef.current.values());
         const d0 = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
         const rect = canvas.getBoundingClientRect();
@@ -416,6 +451,16 @@ export default function PixelCanvas({
           worldMidX: (midX - v.panX) / v.scale,
           worldMidY: (midY - v.panY) / v.scale,
         };
+        return;
+      }
+
+      // Mode pinceau : on peint au glisser (un seul doigt / bouton).
+      if (propsRef.current.brush && propsRef.current.tool === "place") {
+        cancelLongPress();
+        dragRef.current.active = false;
+        const { x, y } = cellFromClient(e.clientX, e.clientY);
+        paintRef.current = { active: true, lastX: x, lastY: y };
+        if (inside(x, y)) cbRef.current.onPaint?.(x, y);
         return;
       }
 
@@ -446,6 +491,17 @@ export default function PixelCanvas({
       if (p) {
         p.x = e.clientX;
         p.y = e.clientY;
+      }
+
+      // Pinceau : peinture continue le long du geste.
+      if (paintRef.current.active) {
+        const { x, y } = cellFromClient(e.clientX, e.clientY);
+        if (x !== paintRef.current.lastX || y !== paintRef.current.lastY) {
+          paintLine(paintRef.current.lastX, paintRef.current.lastY, x, y);
+          paintRef.current.lastX = x;
+          paintRef.current.lastY = y;
+        }
+        return;
       }
 
       // Pincement (2 doigts)
@@ -506,6 +562,13 @@ export default function PixelCanvas({
         canvas.releasePointerCapture(e.pointerId);
       } catch {
         /* ignore */
+      }
+
+      // Fin de peinture au pinceau.
+      if (paintRef.current.active) {
+        paintRef.current.active = false;
+        cbRef.current.onPaintEnd?.();
+        return;
       }
 
       if (pinchRef.current.active) {

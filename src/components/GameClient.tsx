@@ -115,6 +115,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   const [effectSel, setEffectSel] = useState<EffectSel>("");
   const [useShield, setUseShield] = useState(false);
   const [moveFrom, setMoveFrom] = useState<{ x: number; y: number } | null>(null);
+  const [brush, setBrush] = useState(false);
 
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
@@ -142,6 +143,11 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   const minimapRef = useRef<HTMLCanvasElement | null>(null);
   const focusKeyRef = useRef(1);
   const toastIdRef = useRef(1);
+  // Pinceau : tampon des cailloux peints pendant le geste.
+  const paintBufRef = useRef<{ x: number; y: number }[]>([]);
+  const paintSeenRef = useRef<Set<number>>(new Set());
+  const paintedCountRef = useRef(0);
+  const bumpRafRef = useRef<number | null>(null);
 
   const isAdmin = !!me?.isAdmin;
   const inv = useMemo(() => me?.inventory || {}, [me]);
@@ -371,51 +377,151 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
     [celebrate],
   );
 
+  // Pose instantanée (optimiste, non bloquante) : le caillou apparaît tout de
+  // suite, la requête part en arrière-plan et se réconcilie ensuite.
   const doPlace = useCallback(
-    async (x: number, y: number) => {
+    (x: number, y: number) => {
       if (!me?.authenticated) return needAccount();
-      if (!isAdmin && pixelsRef.current.has(keyOf(x, y))) {
+      const key = keyOf(x, y);
+      if (!isAdmin && pixelsRef.current.has(key)) {
         flash("Cette case est déjà occupée.");
         sfx("error");
         return;
       }
-      setBusy(true);
-      try {
-        const r = await fetch("/api/pixels/place", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            x, y, color,
-            link: link || undefined,
-            text: text || undefined,
-            effect: effectSel || undefined,
-            shield: useShield,
-          }),
-        });
-        const data = await r.json();
-        if (!r.ok) {
-          flash(data.error || "Impossible de poser ici.");
-          sfx("error");
-          loadPixels();
+      if (!isAdmin && !effectSel && (me.credits ?? 0) <= 0) {
+        flash("Plus de cailloux ! Prends un sac dans la boutique.");
+        sfx("error");
+        return;
+      }
+
+      const snapColor = color;
+      const snapLink = link;
+      const snapText = text;
+      const snapEffect = effectSel;
+      const snapShield = useShield;
+      const eCode = snapEffect === "golden" ? 1 : snapEffect === "rainbow" ? 2 : snapEffect === "diamond" ? 3 : 0;
+
+      // Affichage immédiat
+      pixelsRef.current.set(key, { c: snapColor, e: eCode, i: !!(snapLink || snapText) });
+      setCount(pixelsRef.current.size);
+      bump();
+      rememberColor(snapColor);
+      if (!isAdmin && !snapEffect) {
+        setMe((m) => (m ? { ...m, credits: Math.max(0, (m.credits ?? 0) - 1) } : m));
+      }
+      setEffectSel("");
+      setUseShield(false);
+      sfx("place");
+      buzz(10);
+
+      (async () => {
+        try {
+          const r = await fetch("/api/pixels/place", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              x, y, color: snapColor,
+              link: snapLink || undefined,
+              text: snapText || undefined,
+              effect: snapEffect || undefined,
+              shield: snapShield,
+            }),
+          });
+          const data = await r.json();
+          if (!r.ok) {
+            flash(data.error || "Impossible de poser ici.");
+            sfx("error");
+            pixelsRef.current.delete(key);
+            setCount(pixelsRef.current.size);
+            bump();
+            loadMe();
+            return;
+          }
+          applyProgress(data);
+          if (snapEffect || snapShield) loadMe();
+        } catch {
+          pixelsRef.current.delete(key);
+          setCount(pixelsRef.current.size);
+          bump();
           loadMe();
-          return;
         }
-        const eCode = effectSel === "golden" ? 1 : effectSel === "rainbow" ? 2 : effectSel === "diamond" ? 3 : 0;
-        pixelsRef.current.set(keyOf(x, y), { c: color, e: eCode, i: !!(link || text) });
+      })();
+    },
+    [me, isAdmin, color, link, text, effectSel, useShield, flash, sfx, buzz, loadMe, rememberColor, applyProgress, needAccount],
+  );
+
+  // ── Pinceau : peindre plusieurs cailloux au glisser ──
+  const scheduleBump = useCallback(() => {
+    if (bumpRafRef.current != null) return;
+    bumpRafRef.current = requestAnimationFrame(() => {
+      bumpRafRef.current = null;
+      setCount(pixelsRef.current.size);
+      setVersion((v) => v + 1);
+    });
+  }, []);
+
+  const onPaint = useCallback(
+    (x: number, y: number) => {
+      if (!me?.authenticated) {
+        needAccount();
+        return;
+      }
+      const key = keyOf(x, y);
+      if (pixelsRef.current.has(key)) return; // case occupée
+      if (paintSeenRef.current.has(key)) return;
+      if (!isAdmin && paintedCountRef.current >= (me.credits ?? 0)) return; // budget épuisé
+      paintSeenRef.current.add(key);
+      paintBufRef.current.push({ x, y });
+      paintedCountRef.current++;
+      pixelsRef.current.set(key, { c: color, e: 0, i: false });
+      scheduleBump();
+    },
+    [me, isAdmin, color, needAccount, scheduleBump],
+  );
+
+  const onPaintEnd = useCallback(async () => {
+    const painted = paintBufRef.current;
+    paintBufRef.current = [];
+    paintSeenRef.current = new Set();
+    paintedCountRef.current = 0;
+    if (painted.length === 0) return;
+    sfx("place");
+    buzz(18);
+    const snapColor = color;
+    try {
+      const r = await fetch("/api/pixels/place-batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cells: painted, color: snapColor }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        flash(data.error || "Pose impossible.");
+        for (const c of painted) pixelsRef.current.delete(keyOf(c.x, c.y));
         setCount(pixelsRef.current.size);
         bump();
-        rememberColor(color);
-        applyProgress(data);
-        setEffectSel("");
-        setUseShield(false);
-        sfx("place");
-        buzz(12);
-      } finally {
-        setBusy(false);
+        loadMe();
+        return;
       }
-    },
-    [me, isAdmin, color, link, text, effectSel, useShield, flash, sfx, buzz, loadPixels, loadMe, rememberColor, applyProgress, needAccount],
-  );
+      const placedSet = new Set(
+        (data.placed as { x: number; y: number }[]).map((c) => keyOf(c.x, c.y)),
+      );
+      for (const c of painted) {
+        if (!placedSet.has(keyOf(c.x, c.y))) pixelsRef.current.delete(keyOf(c.x, c.y));
+      }
+      setCount(pixelsRef.current.size);
+      bump();
+      setMe((m) => (m ? { ...m, credits: data.credits } : m));
+      const n = data.placed.length;
+      if (n < painted.length) flash(`🪨 ${n} caillou(x) posé(s) (crédits/occupé)`, "success");
+      else flash(`🪨 ${n} caillou(x) posé(s) !`, "success");
+    } catch {
+      for (const c of painted) pixelsRef.current.delete(keyOf(c.x, c.y));
+      setCount(pixelsRef.current.size);
+      bump();
+      loadMe();
+    }
+  }, [color, sfx, buzz, flash, loadMe]);
 
   const doBomb = useCallback(
     async (x: number, y: number, kind: "bomb" | "mega" | "nuke") => {
@@ -742,12 +848,24 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         selected={isMobile ? selected : null}
         moveFrom={moveFrom}
         showGrid={showGrid}
+        brush={brush && tool === "place"}
         focus={focus}
         onCellAction={onCellAction}
-        onTapSelect={isMobile ? (x, y) => { setSelected({ x, y }); sfx("click"); } : undefined}
+        onTapSelect={
+          isMobile
+            ? (x, y) => {
+                // Pose/inspection/pipette = action directe (fluide) ;
+                // les outils destructeurs passent par le bouton de confirmation.
+                if (tool === "place" || tool === "inspect" || tool === "pick") onCellAction(x, y);
+                else { setSelected({ x, y }); sfx("click"); }
+              }
+            : undefined
+        }
         onLongPress={(x, y) => doInspect(x, y)}
         onHoverCell={setHover}
         onViewChange={onViewChange}
+        onPaint={onPaint}
+        onPaintEnd={onPaintEnd}
         onReady={(el) => { canvasElRef.current = el; }}
       />
 
@@ -884,6 +1002,18 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
 
           {sheetTab === "colors" && (
             <div className="pd-sheet-body">
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+                <button
+                  className={`pd-btn pd-mini ${brush ? "pd-on" : ""}`}
+                  onClick={() => { setBrush((b) => !b); setTool("place"); sfx("click"); }}
+                  title="Glisser pour poser plusieurs cailloux"
+                >
+                  🖌️ Pinceau {brush ? "ON" : "OFF"}
+                </button>
+                <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                  {brush ? "Glisse pour poser une traînée · 2 doigts = déplacer" : "Glisser = déplacer la carte"}
+                </span>
+              </div>
               <div className="pd-palette">
                 {PALETTE.map((c) => (
                   <button
