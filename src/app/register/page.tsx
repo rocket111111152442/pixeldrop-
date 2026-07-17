@@ -65,7 +65,7 @@ function RegisterForm() {
           <Logo size={34} />
         </Link>
         <p style={{ textAlign: "center", color: "var(--muted)", marginTop: 4, marginBottom: 22 }}>
-          Crée ton compte — 10 pixels offerts{referral ? " (+5 avec le parrainage 🎁)" : ""}.
+          Crée ton compte — 10 cailloux offerts{referral ? " (+5 avec le parrainage 🎁)" : ""}.
         </p>
 
         <button className="pd-btn pd-btn-google" style={{ width: "100%", padding: 14 }} onClick={() => signIn("google", { callbackUrl: "/" })}>

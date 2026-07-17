@@ -1,25 +1,7 @@
 import * as React from "react";
 
-// Logo PixelDrop : une goutte faite de pixels (pixel + « drop »),
-// aux couleurs de la marque, avec quelques pixels colorés en clin d'œil au canvas.
-
-// Cellules de la goutte : [colonne, ligne, couleur?]  (défaut = blanc)
-const CELLS: [number, number, string?][] = [
-  [3, 0],
-  [3, 1],
-  [2, 2], [3, 2], [4, 2],
-  [1, 3, "#ff3b57"], [2, 3], [3, 3], [4, 3], [5, 3],
-  [1, 4], [2, 4], [3, 4], [4, 4], [5, 4, "#ffd23e"],
-  [0, 5, "#22e07a"], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5],
-  [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6, "#37c6ff"],
-  [1, 7], [2, 7], [3, 7], [4, 7, "#b06bff"], [5, 7],
-  [2, 8], [3, 8], [4, 8],
-];
-
-const OX = 12.75;
-const OY = 7.25;
-const CELL = 5.5;
-const SIZE = 4.8;
+// Logo PebbleDrop : un cairn (empilement de cailloux) devant un sapin,
+// le repère du randonneur en forêt.
 
 export function LogoMark({ size = 32 }: { size?: number }) {
   return (
@@ -28,27 +10,47 @@ export function LogoMark({ size = 32 }: { size?: number }) {
       height={size}
       viewBox="0 0 64 64"
       role="img"
-      aria-label="PixelDrop"
+      aria-label="PebbleDrop"
       style={{ display: "block", flexShrink: 0 }}
     >
       <defs>
-        <linearGradient id="pdLogoGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#6b8cff" />
-          <stop offset="1" stopColor="#b06bff" />
+        <linearGradient id="pdSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#cfe3d2" />
+          <stop offset="1" stopColor="#7fa886" />
+        </linearGradient>
+        <linearGradient id="pdStone1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#eceae4" />
+          <stop offset="1" stopColor="#b3aca0" />
+        </linearGradient>
+        <linearGradient id="pdStone2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#b9b2a6" />
+          <stop offset="1" stopColor="#756c61" />
+        </linearGradient>
+        <linearGradient id="pdStone3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#8a8175" />
+          <stop offset="1" stopColor="#4d463e" />
         </linearGradient>
       </defs>
-      <rect width="64" height="64" rx="14" fill="url(#pdLogoGrad)" />
-      {CELLS.map(([c, r, fill], i) => (
-        <rect
-          key={i}
-          x={OX + c * CELL}
-          y={OY + r * CELL}
-          width={SIZE}
-          height={SIZE}
-          rx="1.1"
-          fill={fill || "#ffffff"}
-        />
-      ))}
+
+      {/* Ciel / clairière */}
+      <rect width="64" height="64" rx="14" fill="url(#pdSky)" />
+
+      {/* Montagne au fond */}
+      <path d="M0 44 L18 24 L30 38 L40 28 L64 48 L64 64 L0 64 Z" fill="#5d7f68" opacity="0.55" />
+
+      {/* Sapins */}
+      <path d="M12 46 L17 30 L22 46 Z" fill="#33543f" />
+      <path d="M46 47 L51 33 L56 47 Z" fill="#33543f" opacity="0.9" />
+
+      {/* Sol */}
+      <path d="M0 50 Q32 44 64 50 L64 64 L0 64 Z" fill="#3f5138" />
+
+      {/* Cairn : 3 cailloux empilés */}
+      <ellipse cx="32" cy="50" rx="13" ry="6.5" fill="url(#pdStone3)" />
+      <ellipse cx="32" cy="41" rx="9.5" ry="5.5" fill="url(#pdStone2)" />
+      <ellipse cx="32" cy="33" rx="6" ry="4.2" fill="url(#pdStone1)" />
+      {/* Reflet */}
+      <ellipse cx="30" cy="31.6" rx="2.4" ry="1.3" fill="#ffffff" opacity="0.65" />
     </svg>
   );
 }
@@ -66,12 +68,12 @@ export function Logo({
       <span
         style={{
           fontWeight: 900,
-          fontSize: Math.round(size * 0.62),
+          fontSize: Math.round(size * 0.6),
           letterSpacing: -0.5,
           color,
         }}
       >
-        PixelDrop
+        PebbleDrop
       </span>
     </span>
   );

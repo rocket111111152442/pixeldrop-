@@ -44,7 +44,7 @@ export default function LoginPage() {
           <Logo size={34} />
         </Link>
         <p style={{ textAlign: "center", color: "var(--muted)", marginTop: 4, marginBottom: 22 }}>
-          Connecte-toi et reçois 10 pixels gratuits.
+          Connecte-toi et reçois 10 cailloux gratuits.
         </p>
 
         {/* Google mis en avant */}

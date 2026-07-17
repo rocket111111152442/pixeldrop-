@@ -1,17 +1,17 @@
 import type { MetadataRoute } from "next";
 
-// PWA : PixelDrop installable sur l'écran d'accueil (mobile + desktop).
+// PWA : PebbleDrop installable sur l'écran d'accueil (mobile + desktop).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "PixelDrop — Achète des pixels, dessine le monde",
-    short_name: "PixelDrop",
+    name: "PebbleDrop — Pose ton caillou, nourris un cœur",
+    short_name: "PebbleDrop",
     description:
-      "1 000 000 de pixels à conquérir. Pose tes pixels, attache des liens et des messages, défends ton territoire.",
+      "1 000 000 de cailloux à poser. 10 offerts. 100 % des recettes reversées aux Restos du Cœur.",
     start_url: "/",
     display: "standalone",
     orientation: "any",
-    background_color: "#0b0f1a",
-    theme_color: "#0b0f1a",
+    background_color: "#eef3ea",
+    theme_color: "#eef3ea",
     icons: [
       { src: "/logo-mark.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
       { src: "/logo-mark.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },

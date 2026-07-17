@@ -72,7 +72,7 @@ export default function BoutiquePage() {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {credits !== null && (
             <span className="pd-panel" style={{ padding: "8px 12px", fontSize: 14 }}>
-              💰 <strong style={{ color: "var(--accent)" }}>{credits}</strong> pixels
+              💰 <strong style={{ color: "var(--accent)" }}>{credits}</strong> cailloux
             </span>
           )}
           <Link href="/" className="pd-btn" style={{ textDecoration: "none" }}>← Carte</Link>
@@ -123,7 +123,7 @@ export default function BoutiquePage() {
       </div>
 
       <p style={{ color: "var(--muted)", fontSize: 12, marginTop: 22, textAlign: "center" }}>
-        Les effets (⭐🌈💎) se choisissent dans « Options » avant de poser un pixel. Les badges,
+        Les pierres rares (⭐🌈💎) se choisissent dans « Options » avant de poser un caillou. Les badges,
         titres et couleurs s'équipent depuis <Link href="/profil" style={{ color: "var(--accent)" }}>ton profil</Link>.
       </p>
     </div>

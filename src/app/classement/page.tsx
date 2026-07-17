@@ -29,8 +29,8 @@ export default function ClassementPage() {
   }, []);
 
   const TABS: { id: keyof Board; label: string; unit: string }[] = [
-    { id: "territory", label: "🏘️ Territoire", unit: "pixels possédés" },
-    { id: "builders", label: "🏗️ Bâtisseurs", unit: "pixels posés" },
+    { id: "territory", label: "🏘️ Territoire", unit: "cailloux possédés" },
+    { id: "builders", label: "🏗️ Bâtisseurs", unit: "cailloux posés" },
     { id: "levels", label: "⬆️ Niveaux", unit: "XP" },
   ];
 

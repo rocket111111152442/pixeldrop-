@@ -87,7 +87,7 @@ export async function POST(req: Request) {
       // Coût en crédit : nouveau pixel, sans effet, hors admin.
       if (!existing && !admin && !effect) {
         if (dbUser.credits < 1)
-          throw new PlaceError(402, "Plus de pixels ! Achète un pack dans la boutique.");
+          throw new PlaceError(402, "Plus de cailloux ! Prends un sac dans la boutique.");
         await tx.user.update({
           where: { id: dbUser.id },
           data: { credits: { decrement: 1 }, totalPlaced: { increment: 1 } },

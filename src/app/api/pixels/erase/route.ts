@@ -46,9 +46,9 @@ export async function POST(req: Request) {
   } catch (e) {
     const code = (e as Error).message;
     if (code === "404")
-      return NextResponse.json({ error: "Aucun pixel sur cette case." }, { status: 404 });
+      return NextResponse.json({ error: "Aucun caillou sur cette case." }, { status: 404 });
     if (code === "403")
-      return NextResponse.json({ error: "Ce pixel ne t'appartient pas." }, { status: 403 });
+      return NextResponse.json({ error: "Ce caillou ne t'appartient pas." }, { status: 403 });
     if (code === "402")
       return NextResponse.json({ error: "Aucune gomme en stock (boutique)." }, { status: 402 });
     if (code === "401")

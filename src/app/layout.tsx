@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PixelDrop — Achète des pixels, dessine le monde",
+  title: "PebbleDrop — Pose ton caillou, nourris un cœur",
   description:
-    "1 000 000 de pixels à conquérir. Reçois 10 pixels gratuits, choisis ta couleur, pose des liens et des messages, achète des packs et des bombes.",
+    "1 000 000 de cailloux à poser sur une clairière géante. 10 cailloux offerts. 100 % des recettes reversées aux Restos du Cœur.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "PixelDrop",
+    title: "PebbleDrop",
   },
 };
 
@@ -18,7 +18,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#0b0f1a",
+  themeColor: "#eef3ea",
 };
 
 export default function RootLayout({

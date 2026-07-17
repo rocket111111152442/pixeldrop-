@@ -227,7 +227,7 @@ export default function ProfilPage() {
           </button>
         </div>
         <div style={{ color: "var(--muted)", fontSize: 13 }}>
-          Chaque ami inscrit avec ton code = <strong>+5 pixels pour vous deux</strong>.
+          Chaque ami inscrit avec ton code = <strong>+5 cailloux pour vous deux</strong>.
         </div>
         {!me.referredBy && (
           <form

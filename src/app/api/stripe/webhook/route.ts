@@ -74,7 +74,7 @@ async function fulfill(session: Stripe.Checkout.Session) {
           where: { id: userId },
           data: { credits: { increment: product.credits ?? 0 } },
         });
-        result = `+${product.credits} pixels`;
+        result = `+${product.credits} cailloux`;
         break;
       }
       case "item": {

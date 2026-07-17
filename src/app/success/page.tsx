@@ -69,7 +69,7 @@ export default function SuccessPage() {
 
         {credits !== null && (
           <p style={{ fontSize: 17 }}>
-            Solde : <strong style={{ color: "var(--accent)" }}>{credits} pixels</strong>
+            Solde : <strong style={{ color: "var(--accent)" }}>{credits} cailloux</strong>
           </p>
         )}
 

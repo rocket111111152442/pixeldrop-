@@ -4,8 +4,8 @@ import GameClient from "@/components/GameClient";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "PixelDrop — La carte",
-  description: "Explore la carte d'un million de pixels, sans compte.",
+  title: "PebbleDrop — La clairière",
+  description: "Explore la clairière d'un million de cailloux, sans compte.",
 };
 
 // Carte publique : accessible sans compte (mode spectateur).

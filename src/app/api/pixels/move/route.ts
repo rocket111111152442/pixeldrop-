@@ -35,9 +35,9 @@ export async function POST(req: Request) {
       const admin = isAdminUser(dbUser);
 
       const pixel = await tx.pixel.findUnique({ where: { x_y: { x: fromX, y: fromY } } });
-      if (!pixel) throw new MoveError(404, "Aucun pixel sur la case de départ.");
+      if (!pixel) throw new MoveError(404, "Aucun caillou sur la case de départ.");
       if (!admin && pixel.ownerId !== dbUser.id)
-        throw new MoveError(403, "Ce pixel ne t'appartient pas.");
+        throw new MoveError(403, "Ce caillou ne t'appartient pas.");
 
       const target = await tx.pixel.findUnique({ where: { x_y: { x: toX, y: toY } } });
       if (target) throw new MoveError(409, "La case d'arrivée est occupée.");

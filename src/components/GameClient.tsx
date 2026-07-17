@@ -351,7 +351,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   }, []);
 
   const needAccount = useCallback(() => {
-    flash("Crée un compte gratuit pour jouer — 10 pixels offerts !");
+    flash("Crée un compte gratuit pour jouer — 10 cailloux offerts !");
   }, [flash]);
 
   const applyProgress = useCallback(
@@ -441,7 +441,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         bump();
         loadMe();
         applyProgress(data);
-        flash(`💥 ${data.removed.length} pixel(s) détruit(s)`, "success");
+        flash(`💥 ${data.removed.length} caillou(x) délogé(s)`, "success");
         sfx("boom");
         buzz([20, 30, 40]);
       } finally {
@@ -473,7 +473,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         setCount(pixelsRef.current.size);
         bump();
         loadMe();
-        flash(`🪣 ${data.placed.length} pixel(s) peints !`, "success");
+        flash(`🪣 ${data.placed.length} caillou(x) posé(s) !`, "success");
         sfx("place");
         buzz(15);
       } finally {
@@ -503,7 +503,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         pixelsRef.current.set(keyOf(x, y), { c: color, e: prev?.e ?? 0, i: prev?.i ?? false });
         bump();
         loadMe();
-        flash("🎭 Pixel recoloré !", "success");
+        flash("🎭 Caillou poli !", "success");
         sfx("place");
       } finally {
         setBusy(false);
@@ -532,7 +532,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         setCount(pixelsRef.current.size);
         bump();
         loadMe();
-        flash("🧽 Pixel effacé.", "success");
+        flash("🍂 Caillou ramassé.", "success");
       } finally {
         setBusy(false);
       }
@@ -545,11 +545,11 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
       if (!me?.authenticated) return needAccount();
       if (!moveFrom) {
         if (!pixelsRef.current.has(keyOf(x, y))) {
-          flash("Choisis d'abord un de TES pixels à déplacer.");
+          flash("Choisis d'abord un de TES cailloux à déplacer.");
           return;
         }
         setMoveFrom({ x, y });
-        flash("✈️ Pixel saisi — clique une case vide pour le déposer.", "success");
+        flash("🛞 Caillou chargé — clique une case vide pour le déposer.", "success");
         return;
       }
       setBusy(true);
@@ -572,7 +572,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         bump();
         setMoveFrom(null);
         loadMe();
-        flash("✈️ Pixel déplacé !", "success");
+        flash("🛞 Caillou déplacé !", "success");
         sfx("place");
       } finally {
         setBusy(false);
@@ -639,7 +639,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
     setDaily({ claimable: false, reward: 0 });
     setMe((m) => (m ? { ...m, credits: d.credits, dailyStreak: d.streak } : m));
     celebrate(d);
-    flash(`🎁 +${d.reward} pixels ! (série : ${d.streak} jour${d.streak > 1 ? "s" : ""})`, "gold");
+    flash(`🎁 +${d.reward} cailloux ! (série : ${d.streak} jour${d.streak > 1 ? "s" : ""})`, "gold");
     sfx("coin");
   }, [flash, celebrate, sfx]);
 
@@ -648,7 +648,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
     const url = `${window.location.origin}/?x=${c.x}&y=${c.y}&z=${c.z.toFixed(1)}`;
     try {
       if (navigator.share && isMobile) {
-        await navigator.share({ title: "PixelDrop", url });
+        await navigator.share({ title: "PebbleDrop", url });
       } else {
         await navigator.clipboard.writeText(url);
         flash("🔗 Lien copié !", "success");
@@ -771,7 +771,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         <div className="pd-panel pd-brand">
           <LogoMark size={30} />
           <div className="pd-brand-info">
-            <div style={{ fontWeight: 800, fontSize: 15 }}>PixelDrop</div>
+            <div style={{ fontWeight: 800, fontSize: 15 }}>PebbleDrop</div>
             <div style={{ color: "var(--muted)", fontSize: 11 }}>
               {count.toLocaleString("fr-FR")} px · 🟢 {online}
             </div>
@@ -941,7 +941,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
               </div>
               {moveFrom && (
                 <div style={{ marginTop: 8, fontSize: 13, color: "var(--accent)" }}>
-                  ✈️ Pixel saisi en ({moveFrom.x}, {moveFrom.y}) —{" "}
+                  🛞 Caillou chargé en ({moveFrom.x}, {moveFrom.y}) —{" "}
                   <button className="pd-btn pd-mini" onClick={() => setMoveFrom(null)}>annuler</button>
                 </div>
               )}
@@ -957,7 +957,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
             <div className="pd-sheet-body" style={{ display: "grid", gap: 8 }}>
               <input
                 className="pd-input"
-                placeholder="Lien (https://…) attaché au pixel"
+                placeholder="Lien (https://…) gravé sous le caillou"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
               />
@@ -1030,9 +1030,9 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
       {/* ── CTA invité ── */}
       {me !== null && !me.authenticated && (
         <div className="pd-guestbar pd-panel">
-          <span>👀 Mode spectateur — crée un compte pour poser tes pixels !</span>
+          <span>👀 Mode spectateur — crée un compte pour poser tes cailloux !</span>
           <Link href="/register" className="pd-btn pd-btn-primary" style={{ textDecoration: "none" }}>
-            🎁 10 pixels offerts
+            🎁 10 cailloux offerts
           </Link>
         </div>
       )}
@@ -1041,7 +1041,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
       {info && (
         <div className="pd-panel pd-info">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <strong>Pixel ({info.x}, {info.y})</strong>
+            <strong>Caillou ({info.x}, {info.y})</strong>
             <button className="pd-btn pd-mini" onClick={() => setInfo(null)}>✕</button>
           </div>
           {info.found ? (
@@ -1079,7 +1079,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
                   className="pd-btn pd-mini"
                   onClick={async () => {
                     await navigator.clipboard.writeText(`${window.location.origin}/?x=${info.x}&y=${info.y}&z=20`).catch(() => {});
-                    flash("🔗 Lien du pixel copié !", "success");
+                    flash("🔗 Lien du caillou copié !", "success");
                   }}
                 >
                   🔗 Copier
@@ -1088,7 +1088,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
                   <button
                     className="pd-btn pd-mini"
                     onClick={async () => {
-                      const reason = prompt("Pourquoi signaler ce pixel ?");
+                      const reason = prompt("Pourquoi signaler ce caillou ?");
                       if (!reason) return;
                       const r = await fetch("/api/report", {
                         method: "POST",
@@ -1104,7 +1104,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
               </div>
             </div>
           ) : (
-            <div style={{ color: "var(--muted)" }}>Case vide — pose ton pixel ici !</div>
+            <div style={{ color: "var(--muted)" }}>Case vide — pose ton caillou ici !</div>
           )}
         </div>
       )}
@@ -1175,12 +1175,12 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
               <button className="pd-btn pd-mini" onClick={() => setHelpOpen(false)}>✕</button>
             </div>
             <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
-              <p>🖌️ <strong>Poser</strong> : choisis une couleur et clique une case libre (1 crédit). Une case occupée est verrouillée.</p>
+              <p>🪨 <strong>Poser</strong> : choisis une nuance de caillou et clique une case libre (1 caillou). Une case occupée est verrouillée.</p>
               <p>📱 <strong>Mobile</strong> : tape pour viser, confirme avec le gros bouton. Pince pour zoomer, double-tape pour zoomer vite, appui long = infos.</p>
               <p>🖱️ <strong>PC</strong> : molette = zoom, glisser = déplacer, flèches et +/−. Le clic agit directement.</p>
-              <p>💣 Bombe = 1 case · 💥 Méga = 3×3 · ☢️ Nucléaire = 5×5 (pixels adverses non protégés).</p>
-              <p>🪣 Pot = peint les cases vides d'une zone 3×3 · 🎭 recolore TES pixels · ✈️ déplace · 🧽 efface.</p>
-              <p>⭐🌈💎 Les effets rendent ton pixel animé (et la pose ne coûte pas de crédit).</p>
+              <p>⛏️ Pioche = 1 case · 🔨 Masse = 3×3 · 🧨 Dynamite = 5×5 (cailloux adverses non protégés).</p>
+              <p>🪣 Seau = remplit les cases vides d'une zone 3×3 · 🪶 polit TES cailloux · 🛞 déplace · 🍂 ramasse.</p>
+              <p>⭐🌈💎 Les pierres rares rendent ton caillou animé (et la pose ne coûte pas de caillou).</p>
               <p>🎁 Reviens chaque jour pour ta récompense · 🏆 débloque des succès et monte de niveau.</p>
             </div>
           </div>
