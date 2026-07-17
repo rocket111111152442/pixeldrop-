@@ -3,16 +3,18 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { getProduct } from "@/lib/products";
 import { getStripe, CURRENCY } from "@/lib/stripe";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   if (user.banned)
     return NextResponse.json({ error: "Compte banni." }, { status: 403 });
+  if (!rateLimit(`checkout:${user.id}`, 10, 60_000)) return tooMany();
 
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json(
-      { error: "Les paiements ne sont pas encore configurés (STRIPE_SECRET_KEY)." },
+      { error: "Les paiements ne sont pas encore configurés." },
       { status: 503 },
     );
   }
@@ -21,12 +23,20 @@ export async function POST(req: Request) {
   const product = getProduct(String(body.sku || ""));
   if (!product) return NextResponse.json({ error: "Produit inconnu." }, { status: 400 });
 
+  // Un déblocage déjà possédé ne doit pas être racheté.
+  if (product.kind === "unlock" && product.itemSku) {
+    const owned = await prisma.inventoryItem.findUnique({
+      where: { userId_sku: { userId: user.id, sku: product.itemSku } },
+    });
+    if (owned && owned.quantity > 0)
+      return NextResponse.json({ error: "Tu possèdes déjà cet article." }, { status: 400 });
+  }
+
   const origin =
     process.env.AUTH_URL ||
     req.headers.get("origin") ||
     `https://${req.headers.get("host")}`;
 
-  // Trace la commande (idempotence + réconciliation).
   const purchase = await prisma.purchase.create({
     data: {
       userId: user.id,

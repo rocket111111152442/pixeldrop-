@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redactError } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-// Diagnostic de déploiement : quelles variables manquent, la base répond-elle ?
-// Ne renvoie que des booléens (jamais les valeurs des secrets).
+// Diagnostic de déploiement : variables manquantes, état de la base.
+// Ne renvoie que des booléens — jamais les valeurs des secrets.
 export async function GET() {
   const env = {
     DATABASE_URL: !!process.env.DATABASE_URL,
@@ -21,7 +22,7 @@ export async function GET() {
     adminEmailSet: !!process.env.ADMIN_EMAIL,
   };
 
-  let database: { ok: boolean; tables: boolean; error?: string } = {
+  let database: { ok: boolean; tables: boolean; schemaVersion?: string; error?: string } = {
     ok: false,
     tables: false,
   };
@@ -31,12 +32,19 @@ export async function GET() {
       await prisma.$queryRaw`SELECT 1`;
       try {
         await prisma.user.count();
-        database = { ok: true, tables: true };
+        let schemaVersion = "1";
+        try {
+          const s = await prisma.setting.findUnique({ where: { key: "schema_version" } });
+          schemaVersion = s?.value ?? "1";
+        } catch {
+          schemaVersion = "1";
+        }
+        database = { ok: true, tables: true, schemaVersion };
       } catch {
         database = { ok: true, tables: false };
       }
     } catch (e) {
-      database = { ok: false, tables: false, error: (e as Error).message.slice(0, 200) };
+      database = { ok: false, tables: false, error: redactError(e) };
     }
   } else {
     database = { ok: false, tables: false, error: "DATABASE_URL manquant" };
@@ -49,7 +57,9 @@ export async function GET() {
   if (!env.AUTH_SECRET) missing.push("AUTH_SECRET");
   if (env.DATABASE_URL && !database.ok) missing.push("Base injoignable (URL incorrecte ?)");
   if (database.ok && !database.tables)
-    missing.push("Tables absentes (le déploiement les crée automatiquement — redéploie)");
+    missing.push("Tables absentes — ouvre /api/setup une fois");
+  if (database.tables && database.schemaVersion !== "2")
+    missing.push("Schéma à mettre à niveau — ouvre /api/setup une fois");
 
   return NextResponse.json(
     { ready, missing, env, database },

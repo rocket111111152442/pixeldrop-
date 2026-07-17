@@ -1,5 +1,5 @@
 // PixelDrop — schéma de base de données
-// Prod: PostgreSQL (Neon / Supabase / Vercel Postgres) via l'adaptateur pg.
+// Prod: PostgreSQL (Neon) via l'adaptateur pg.
 
 generator client {
   provider = "prisma-client-js"
@@ -22,15 +22,34 @@ model User {
   hashedPassword String?
 
   // Profil de jeu
-  pseudo    String  @unique @default(cuid())
-  isAdmin   Boolean @default(false)
-  banned    Boolean @default(false)
+  pseudo  String  @unique @default(cuid())
+  isAdmin Boolean @default(false)
+  banned  Boolean @default(false)
+  muted   Boolean @default(false)
+  bio     String?
 
   // Économie
   credits       Int     @default(10) // 10 pixels offerts au départ
-  freeGranted   Boolean @default(true) // les 10 crédits initiaux sont "gratuits"
+  freeGranted   Boolean @default(true)
   totalPlaced   Int     @default(0)
   totalSpentCts Int     @default(0) // total dépensé en centimes (EUR)
+
+  // Progression
+  xp           Int       @default(0)
+  level        Int       @default(1)
+  achievements String    @default("") // ids séparés par des virgules
+  dailyStreak  Int       @default(0)
+  lastDailyAt  DateTime?
+  lastSeenAt   DateTime?
+
+  // Personnalisation (équipés — doivent être possédés dans l'inventaire)
+  equippedBadge String?
+  equippedTitle String?
+  nameColor     String?
+
+  // Parrainage
+  referralCode String? @unique
+  referredById String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -40,6 +59,8 @@ model User {
   pixels    Pixel[]
   purchases Purchase[]
   items     InventoryItem[]
+  chats     ChatMessage[]
+  reports   Report[]
 }
 
 model Account {
@@ -82,14 +103,15 @@ model VerificationToken {
 // ─────────────────────────────────────────────
 
 model Pixel {
-  id        String   @id @default(cuid())
-  x         Int
-  y         Int
-  color     String // hex "#RRGGBB"
-  link      String? // URL optionnelle attachée au pixel
-  text      String? // message optionnel (max ~140 car.)
-  shielded  Boolean  @default(false) // protégé contre les bombes
-  golden    Boolean  @default(false) // pixel doré (cosmétique animé)
+  id       String  @id @default(cuid())
+  x        Int
+  y        Int
+  color    String // hex "#RRGGBB"
+  link     String? // URL optionnelle
+  text     String? // message optionnel
+  shielded Boolean @default(false)
+  golden   Boolean @default(false) // compat historique
+  effect   String? // "golden" | "rainbow" | "diamond"
 
   ownerId String?
   owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
@@ -105,26 +127,62 @@ model Pixel {
 model Purchase {
   id              String   @id @default(cuid())
   userId          String
-  sku             String // référence produit (voir src/lib/products.ts)
+  sku             String
   label           String
-  amountCts       Int // montant payé, en centimes EUR
+  amountCts       Int
   creditsGranted  Int      @default(0)
   itemsGranted    Int      @default(0)
+  result          String? // détail du contenu reçu (boîtes mystère, packs)
   stripeSessionId String?  @unique
   status          String   @default("pending") // pending | paid | canceled
   createdAt       DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
 
-// Inventaire d'items consommables (bombes, boucliers, etc.)
+// Inventaire : consommables (bombes…) et déblocages (badges, titres, couleurs)
 model InventoryItem {
   id       String @id @default(cuid())
   userId   String
-  sku      String // ex: "bomb", "mega_bomb", "shield", "golden"
+  sku      String
   quantity Int    @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, sku])
+}
+
+// Chat global
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+// Signalements de pixels
+model Report {
+  id         String   @id @default(cuid())
+  x          Int
+  y          Int
+  reason     String
+  status     String   @default("open") // open | resolved
+  reporterId String?
+  createdAt  DateTime @default(now())
+
+  reporter User? @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+}
+
+// Réglages globaux (annonce, version du schéma…)
+model Setting {
+  key   String @id
+  value String
 }

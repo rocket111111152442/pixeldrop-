@@ -10,8 +10,7 @@ export default async function Home() {
     const session = await auth();
     authed = !!session?.user;
   } catch {
-    // Si la base de données n'est pas joignable, on montre le portail
-    // de connexion plutôt qu'un écran d'erreur serveur.
+    // Base injoignable : on montre la vitrine plutôt qu'une erreur serveur.
     authed = false;
   }
 

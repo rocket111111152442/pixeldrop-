@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
@@ -20,18 +20,22 @@ const ERROR_LABELS: Record<string, string> = {
 const EUR = (cts: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(cts / 100);
 
+type Deco = { color: string; delay: string; dur: string; op: string };
+
 export default function Landing() {
-  // Pixels décoratifs animés en fond.
-  const deco = useMemo(
-    () =>
+  // Pixels décoratifs animés en fond — générés côté client uniquement
+  // (Math.random() côté serveur provoquerait un mismatch d'hydratation).
+  const [deco, setDeco] = useState<Deco[]>([]);
+  useEffect(() => {
+    setDeco(
       Array.from({ length: 160 }, () => ({
         color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
         delay: (Math.random() * 6).toFixed(2),
         dur: (2.5 + Math.random() * 4).toFixed(2),
         op: (0.25 + Math.random() * 0.5).toFixed(2),
       })),
-    [],
-  );
+    );
+  }, []);
 
   const packs = PRODUCTS.filter((p) => p.kind === "credits");
   const items = PRODUCTS.filter((p) => p.kind === "item");
@@ -88,6 +92,9 @@ export default function Landing() {
           <div className="pd-hero-cta">
             <Link href="/register" className="pd-btn pd-btn-primary pd-btn-lg" style={{ textDecoration: "none" }}>
               🚀 Créer mon compte gratuit
+            </Link>
+            <Link href="/carte" className="pd-btn pd-btn-lg" style={{ textDecoration: "none" }}>
+              🗺️ Voir la carte sans compte
             </Link>
             <a href="#comment" className="pd-btn pd-btn-lg" style={{ textDecoration: "none" }}>
               Comment ça marche ?

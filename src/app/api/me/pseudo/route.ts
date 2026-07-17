@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { cleanPseudo } from "@/lib/security";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "non connecté" }, { status: 401 });
+  if (!rateLimit(`pseudo:${user.id}`, 5, 60_000)) return tooMany();
 
   const body = await req.json().catch(() => ({}));
-  const raw = String(body.pseudo || "").trim();
-  const pseudo = raw.replace(/[^a-zA-Z0-9_\- ]/g, "").slice(0, 20);
+  const pseudo = cleanPseudo(body.pseudo);
 
-  if (pseudo.length < 3) {
+  if (!pseudo) {
     return NextResponse.json(
-      { error: "Le pseudo doit faire au moins 3 caractères." },
+      { error: "Le pseudo doit faire entre 3 et 20 caractères (lettres, chiffres, - _)." },
       { status: 400 },
     );
   }

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, isAdminUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { isInsideGrid } from "@/lib/canvas-config";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { addXp, awardAchievements, levelAchievements, XP_BOMB } from "@/lib/game";
 
 class BombError extends Error {
   constructor(public status: number, message: string) {
@@ -9,20 +11,29 @@ class BombError extends Error {
   }
 }
 
+// bomb = 1 case, mega = 3×3, nuke = 5×5
+const KINDS: Record<string, { sku: string; radius: number }> = {
+  bomb: { sku: "bomb", radius: 0 },
+  mega: { sku: "mega_bomb", radius: 1 },
+  nuke: { sku: "nuke", radius: 2 },
+};
+
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
   if (user.banned)
     return NextResponse.json({ error: "Compte banni." }, { status: 403 });
+  if (!rateLimit(`bomb:${user.id}`, 10, 10_000)) return tooMany();
 
   const body = await req.json().catch(() => ({}));
   const x = Number(body.x);
   const y = Number(body.y);
-  const mega = Boolean(body.mega);
+  let kindName = String(body.kind || "");
+  if (!kindName) kindName = body.mega ? "mega" : "bomb"; // compat
+  const kind = KINDS[kindName];
+  if (!kind) return NextResponse.json({ error: "Type de bombe inconnu." }, { status: 400 });
   if (!isInsideGrid(x, y))
     return NextResponse.json({ error: "Hors de la grille." }, { status: 400 });
-
-  const sku = mega ? "mega_bomb" : "bomb";
 
   try {
     const removed = await prisma.$transaction(async (tx) => {
@@ -30,24 +41,19 @@ export async function POST(req: Request) {
       if (!dbUser) throw new BombError(401, "Non connecté.");
       const admin = isAdminUser(dbUser);
 
-      // Zone visée.
       const coords: { x: number; y: number }[] = [];
-      if (mega) {
-        for (let dx = -1; dx <= 1; dx++)
-          for (let dy = -1; dy <= 1; dy++) {
-            const nx = x + dx;
-            const ny = y + dy;
-            if (isInsideGrid(nx, ny)) coords.push({ x: nx, y: ny });
-          }
-      } else {
-        coords.push({ x, y });
-      }
+      for (let dx = -kind.radius; dx <= kind.radius; dx++)
+        for (let dy = -kind.radius; dy <= kind.radius; dy++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (isInsideGrid(nx, ny)) coords.push({ x: nx, y: ny });
+        }
 
       const targets = await tx.pixel.findMany({
         where: { OR: coords.map((c) => ({ x: c.x, y: c.y })) },
       });
 
-      // Cibles détruisables : pixels d'autrui, non protégés (admin ignore ces règles).
+      // Détruisables : pixels d'autrui, non protégés (l'admin ignore ces règles).
       const destroyable = targets.filter((p) =>
         admin ? true : p.ownerId !== dbUser.id && !p.shielded,
       );
@@ -56,16 +62,12 @@ export async function POST(req: Request) {
         throw new BombError(400, "Rien à détruire ici (vide, protégé, ou à toi).");
       }
 
-      // Consomme l'item (hors admin).
       if (!admin) {
         const item = await tx.inventoryItem.findUnique({
-          where: { userId_sku: { userId: dbUser.id, sku } },
+          where: { userId_sku: { userId: dbUser.id, sku: kind.sku } },
         });
         if (!item || item.quantity < 1)
-          throw new BombError(
-            402,
-            mega ? "Aucune méga-bombe en stock." : "Aucune bombe en stock.",
-          );
+          throw new BombError(402, "Tu n'as pas cet explosif en stock (boutique).");
         await tx.inventoryItem.update({
           where: { id: item.id },
           data: { quantity: { decrement: 1 } },
@@ -79,7 +81,26 @@ export async function POST(req: Request) {
       return destroyable.map((p) => ({ x: p.x, y: p.y }));
     });
 
-    return NextResponse.json({ ok: true, removed });
+    let xpState = { xp: 0, level: 1, leveledUp: false };
+    let newAchievements: string[] = [];
+    try {
+      xpState = await addXp(user.id, XP_BOMB);
+      newAchievements = await awardAchievements(user.id, [
+        "bomber",
+        ...levelAchievements(xpState.level),
+      ]);
+    } catch {
+      /* best effort */
+    }
+
+    return NextResponse.json({
+      ok: true,
+      removed,
+      xp: xpState.xp,
+      level: xpState.level,
+      leveledUp: xpState.leveledUp,
+      newAchievements,
+    });
   } catch (e) {
     if (e instanceof BombError)
       return NextResponse.json({ error: e.message }, { status: e.status });
