@@ -37,7 +37,7 @@ export default function Landing() {
       {/* ── Bandeau engagement caritatif ── */}
       <div className="pd-give-bar">
         <span className="pd-give-pill">
-          ❤️ 5 % de chaque achat reversé à une association caritative
+          ❤️ L&apos;argent des achats part à une association caritative
         </span>
       </div>
 
@@ -102,8 +102,8 @@ export default function Landing() {
               <span>offerts, sans payer</span>
             </div>
             <div>
-              <strong>5 %</strong>
-              <span>reversés à une association</span>
+              <strong>Solidarité</strong>
+              <span>l&apos;argent part à une association</span>
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function Landing() {
               Jouer fait aussi du bien
             </h2>
             <p style={{ margin: "0 0 10px", fontSize: 16, lineHeight: 1.6, color: "#2e3f34" }}>
-              <strong>5 % de chaque achat réalisé sur PebbleDrop est reversé à une
+              <strong>L&apos;argent des achats réalisés sur PebbleDrop part à une
               association caritative.</strong> Une association est tirée au sort à chaque
               période, et le versement est effectué chaque trimestre.
             </p>
