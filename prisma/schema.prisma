@@ -28,6 +28,19 @@ model User {
   muted   Boolean @default(false)
   bio     String?
 
+  // Modération / sanctions
+  bannedAt          DateTime?
+  banExpiresAt      DateTime?
+  banReason         String?
+  banCategory       String?
+  banSource         String?
+  banSeverity       String?
+  banAppealDeadline DateTime?
+  banAppealText     String?   @db.Text
+  banAppealedAt     DateTime?
+  banAppealStatus   String    @default("none") // none | pending | accepted | rejected
+  banDeleteAfter    DateTime?
+
   // Économie
   credits       Int     @default(10) // 10 pixels offerts au départ
   freeGranted   Boolean @default(true)
@@ -57,13 +70,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  pixels    Pixel[]
-  purchases Purchase[]
-  items     InventoryItem[]
-  chats     ChatMessage[]
-  reports   Report[]
+  accounts          Account[]
+  sessions          Session[]
+  pixels            Pixel[]
+  purchases         Purchase[]
+  items             InventoryItem[]
+  chats             ChatMessage[]
+  reports           Report[]
+  moderationCases   ModerationCase[] @relation("ModerationSubject")
+  moderationActions ModerationCase[] @relation("ModerationAdmin")
 }
 
 model Account {
@@ -159,14 +174,18 @@ model InventoryItem {
 
 // Chat global
 model ChatMessage {
-  id        String   @id @default(cuid())
-  userId    String
-  text      String
-  createdAt DateTime @default(now())
+  id            String    @id @default(cuid())
+  userId        String
+  text          String
+  deletedAt     DateTime?
+  deletedReason String?
+  deletedById   String?
+  createdAt     DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 // Signalements de pixels
@@ -182,6 +201,42 @@ model Report {
   reporter User? @relation(fields: [reporterId], references: [id], onDelete: SetNull)
 
   @@index([status])
+}
+
+// File de modération créée par le bot, les joueurs ou les admins.
+model ModerationCase {
+  id         String  @id @default(cuid())
+  source     String // bot | user | admin | appeal
+  targetType String // pixel | chat | user | appeal
+  targetId   String?
+  status     String  @default("open") // open | resolved
+
+  userId String?
+  user   User?   @relation("ModerationSubject", fields: [userId], references: [id], onDelete: SetNull)
+
+  x    Int?
+  y    Int?
+  link String? @db.Text
+  text String? @db.Text
+
+  category String
+  severity String // review | temporary_ban | permanent_ban
+  action   String // reported | blocked | message_deleted | banned | account_deleted
+  reason   String  @db.Text
+  details  String? @db.Text
+
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolvedBy   User?     @relation("ModerationAdmin", fields: [resolvedById], references: [id], onDelete: SetNull)
+  adminNote    String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([targetType, targetId])
 }
 
 // Réglages globaux (annonce, version du schéma…)
@@ -202,7 +257,7 @@ model Quest {
   goalType  String // place | place_color | place_area | bomb | effect
   goalParam String? // couleur "#rrggbb", zone "x,y,w,h", effet "golden"…
   target    Int
-  progress  Int    @default(0)
+  progress  Int     @default(0)
 
   startAt DateTime @default(now())
   endAt   DateTime

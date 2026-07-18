@@ -35,7 +35,8 @@ Il te faut une base **PostgreSQL** (gratuit : [Neon](https://neon.tech),
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Connexion Google (mise en avant) |
 | `AUTH_MICROSOFT_ENTRA_ID_ID` / `_SECRET` | Connexion Microsoft |
 | `AUTH_APPLE_ID` / `AUTH_APPLE_SECRET` | Connexion Apple |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Compte admin (créé par le seed) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Compte admin (créé par le seed, mot de passe 12 caractères minimum) |
+| `SETUP_TOKEN` | Token secret optionnel pour lancer `/api/setup` sans session admin |
 | `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Clés Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Secret du webhook Stripe |
 | `NEXT_PUBLIC_CURRENCY` | Devise (`eur` par défaut) |

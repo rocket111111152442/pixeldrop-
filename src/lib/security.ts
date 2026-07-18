@@ -2,7 +2,9 @@
 
 /** Garde uniquement les caractères imprimables, coupe à maxLen. */
 export function cleanText(v: unknown, maxLen = 140): string | null {
-  const raw = String(v ?? "");
+  const raw = String(v ?? "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "");
   let out = "";
   for (const ch of raw) {
     const code = ch.codePointAt(0) ?? 0;
@@ -21,6 +23,22 @@ export function cleanLink(v: unknown): string | null | "invalid" {
   if (s.length > 500) return "invalid";
   try {
     const u = new URL(s);
+    if (u.username || u.password) return "invalid";
+    const host = u.hostname.toLowerCase().replace(/^\[/, "").replace(/\]$/, "");
+    if (
+      host === "localhost" ||
+      host.endsWith(".localhost") ||
+      host.endsWith(".local") ||
+      host.endsWith(".internal") ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host.startsWith("10.") ||
+      host.startsWith("192.168.") ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      host === "::1"
+    ) {
+      return "invalid";
+    }
     if (u.protocol === "http:" || u.protocol === "https:") return u.toString().slice(0, 500);
   } catch {
     /* ignore */

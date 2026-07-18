@@ -8,8 +8,12 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const email = (process.env.ADMIN_EMAIL || "admin@pixeldrop.app").toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || "changeme123";
+  const password = process.env.ADMIN_PASSWORD;
   const pseudo = process.env.ADMIN_PSEUDO || "Admin";
+  if (!password || password.length < 12) {
+    console.log("Admin ignoré : ADMIN_PASSWORD manquant ou trop court (12 caractères minimum).");
+    return;
+  }
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const existing = await prisma.user.findUnique({ where: { email } });

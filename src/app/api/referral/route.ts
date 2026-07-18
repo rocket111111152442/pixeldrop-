@@ -9,6 +9,7 @@ const REFERRAL_BONUS = 5;
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
+  if (user.banned) return NextResponse.json({ error: "Compte banni." }, { status: 403 });
   if (!rateLimit(`ref:${user.id}`, 5, 60_000)) return tooMany();
 
   if (user.referredById)

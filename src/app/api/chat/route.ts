@@ -4,12 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { cleanText } from "@/lib/security";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { addXp, awardAchievements, XP_CHAT } from "@/lib/game";
+import { applyModerationVerdict, moderateContent, publicBanMessage } from "@/lib/moderation";
 
 export const dynamic = "force-dynamic";
 
 // Chat global — lecture publique, écriture pour les joueurs connectés.
 export async function GET() {
   const messages = await prisma.chatMessage.findMany({
+    where: { deletedAt: null },
     orderBy: { createdAt: "desc" },
     take: 50,
     include: {
@@ -56,6 +58,38 @@ export async function POST(req: Request) {
   const text = cleanText(body.text, 200);
   if (!text) return NextResponse.json({ error: "Message vide." }, { status: 400 });
 
+  if (!isAdminUser(user)) {
+    const moderation = moderateContent({ targetType: "chat", text });
+    if (moderation.decision !== "allow") {
+      const hidden = await prisma.chatMessage.create({
+        data: {
+          userId: user.id,
+          text,
+          deletedAt: new Date(),
+          deletedReason: moderation.reason,
+          deletedById: "moderation-bot",
+        },
+      });
+      await applyModerationVerdict({
+        userId: user.id,
+        source: "bot",
+        targetType: "chat",
+        targetId: hidden.id,
+        text,
+        verdict: moderation,
+      });
+      return NextResponse.json(
+        {
+          error:
+            moderation.decision === "ban"
+              ? publicBanMessage(moderation)
+              : "Message suspect supprime et transmis aux administrateurs.",
+        },
+        { status: moderation.decision === "ban" ? 403 : 400 },
+      );
+    }
+  }
+
   const msg = await prisma.chatMessage.create({
     data: { userId: user.id, text },
   });
@@ -85,6 +119,13 @@ export async function DELETE(req: Request) {
   if (msg.userId !== user.id && !isAdminUser(user))
     return NextResponse.json({ error: "Interdit." }, { status: 403 });
 
-  await prisma.chatMessage.delete({ where: { id } });
+  await prisma.chatMessage.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+      deletedReason: isAdminUser(user) ? "Supprime par un administrateur." : "Supprime par l'auteur.",
+      deletedById: user.id,
+    },
+  });
   return NextResponse.json({ ok: true });
 }

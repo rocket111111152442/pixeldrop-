@@ -97,7 +97,7 @@ function RegisterForm() {
           <input className="pd-input" placeholder="Pseudo" value={pseudo} onChange={(e) => setPseudo(e.target.value)} minLength={3} maxLength={20} required />
           <input className="pd-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <div>
-            <input className="pd-input" type="password" placeholder="Mot de passe (6+ caractères)" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
+            <input className="pd-input" type="password" placeholder="Mot de passe (8+ caractères)" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required />
             {password && (
               <div style={{ marginTop: 6 }}>
                 <div style={{ height: 5, borderRadius: 999, background: "var(--panel-2)", overflow: "hidden" }}>

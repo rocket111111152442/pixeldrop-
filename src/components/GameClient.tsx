@@ -236,6 +236,10 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
     try {
       const r = await fetch("/api/me", { cache: "no-store" });
       const data = await r.json();
+      if (data.authenticated && data.banned) {
+        window.location.href = "/banni";
+        return;
+      }
       setMe(data);
       if (data.authenticated) {
         setDaily((d) => ({ ...d, claimable: !!data.dailyClaimable }));

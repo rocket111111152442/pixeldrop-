@@ -6,6 +6,7 @@ import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { ipOf, rateLimit } from "@/lib/rate-limit";
 
 // Les providers OAuth ne sont activés que si leurs identifiants sont présents,
 // pour que l'application démarre même partiellement configurée.
@@ -53,14 +54,14 @@ providers.push(
       email: { label: "Email", type: "email" },
       password: { label: "Mot de passe", type: "password" },
     },
-    async authorize(credentials) {
+    async authorize(credentials, request) {
       const email = String(credentials?.email || "").toLowerCase().trim();
       const password = String(credentials?.password || "");
       if (!email || !password) return null;
+      if (!rateLimit(`login:${ipOf(request)}:${email}`, 10, 15 * 60_000)) return null;
 
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user || !user.hashedPassword) return null;
-      if (user.banned) throw new Error("banned");
 
       const ok = await bcrypt.compare(password, user.hashedPassword);
       if (!ok) return null;
@@ -87,17 +88,6 @@ export const authConfig: NextAuthConfig = {
   },
   providers,
   callbacks: {
-    async signIn({ user }) {
-      // Bloque les comptes bannis.
-      if (user?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email.toLowerCase() },
-          select: { banned: true },
-        });
-        if (dbUser?.banned) return false;
-      }
-      return true;
-    },
     async jwt({ token, user }) {
       // À la connexion, ou périodiquement, on recharge les infos de jeu.
       if (user?.id) token.uid = user.id;

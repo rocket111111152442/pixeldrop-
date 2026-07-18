@@ -13,10 +13,22 @@ type AdminUser = {
   image: string | null;
   credits: number;
   banned: boolean;
+  muted: boolean;
   isAdmin: boolean;
   totalPlaced: number;
   totalSpentCts: number;
   createdAt: string;
+  bannedAt: string | null;
+  banExpiresAt: string | null;
+  banReason: string | null;
+  banCategory: string | null;
+  banSource: string | null;
+  banSeverity: string | null;
+  banAppealDeadline: string | null;
+  banAppealText: string | null;
+  banAppealedAt: string | null;
+  banAppealStatus: string;
+  banDeleteAfter: string | null;
   _count: { pixels: number };
 };
 
@@ -50,10 +62,54 @@ type AdminPurchase = {
   at: string;
 };
 
+type ModerationUser = {
+  id: string;
+  pseudo: string;
+  email: string | null;
+  banned?: boolean;
+  banReason?: string | null;
+  banExpiresAt?: string | null;
+  banAppealDeadline?: string | null;
+  banAppealStatus?: string | null;
+};
+
+type ModerationCase = {
+  id: string;
+  source: string;
+  targetType: string;
+  targetId: string | null;
+  user: ModerationUser | null;
+  x: number | null;
+  y: number | null;
+  link: string | null;
+  text: string | null;
+  category: string;
+  severity: string;
+  action: string;
+  reason: string;
+  details: string | null;
+  createdAt: string;
+};
+
+type BanAppeal = {
+  id: string;
+  pseudo: string;
+  email: string | null;
+  banReason: string | null;
+  banCategory: string | null;
+  banSeverity: string | null;
+  banSource: string | null;
+  bannedAt: string | null;
+  banExpiresAt: string | null;
+  banAppealDeadline: string | null;
+  banAppealText: string | null;
+  banAppealedAt: string | null;
+};
+
 const EUR = (cts: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(cts / 100);
 
-type Tab = "overview" | "users" | "reports" | "purchases";
+type Tab = "overview" | "users" | "moderation" | "reports" | "purchases";
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("overview");
@@ -61,22 +117,27 @@ export default function AdminDashboard() {
   const [muted, setMuted] = useState<Record<string, boolean>>({});
   const [stats, setStats] = useState<Stats | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
+  const [moderationCases, setModerationCases] = useState<ModerationCase[]>([]);
+  const [appeals, setAppeals] = useState<BanAppeal[]>([]);
   const [purchases, setPurchases] = useState<AdminPurchase[]>([]);
   const [search, setSearch] = useState("");
   const [announce, setAnnounce] = useState("");
   const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
-    const [u, s, rep, pur, ann] = await Promise.all([
+    const [u, s, rep, mod, pur, ann] = await Promise.all([
       fetch("/api/admin/users", { cache: "no-store" }).then((r) => r.json()),
       fetch("/api/admin/stats", { cache: "no-store" }).then((r) => r.json()),
       fetch("/api/admin/reports", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ reports: [] })),
+      fetch("/api/admin/moderation", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ cases: [], appeals: [] })),
       fetch("/api/admin/purchases", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ purchases: [] })),
       fetch("/api/announce", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ text: "" })),
     ]);
     setUsers(u.users || []);
     setStats(s);
     setReports(rep.reports || []);
+    setModerationCases(mod.cases || []);
+    setAppeals(mod.appeals || []);
     setPurchases(pur.purchases || []);
     setAnnounce(ann.text || "");
     const m: Record<string, boolean> = {};
@@ -100,8 +161,19 @@ export default function AdminDashboard() {
   };
 
   const ban = (u: AdminUser) => {
-    if (!u.banned && !confirm(`Bannir ${u.pseudo} ? Tous ses pixels seront supprimés.`)) return;
-    post("/api/admin/ban", { userId: u.id, banned: !u.banned });
+    if (u.banned) {
+      post("/api/admin/ban", { userId: u.id, banned: false });
+      return;
+    }
+    const reason = prompt(`Raison du bannissement pour ${u.pseudo} ?`, "Sanction de moderation.");
+    if (!reason) return;
+    const duration = prompt("Durée du ban : nombre de jours, ou permanent", "30");
+    if (!duration) return;
+    const normalized = duration.trim().toLowerCase();
+    const permanent = normalized.startsWith("per") || normalized.startsWith("def");
+    const durationDays = parseInt(normalized, 10);
+    if (!permanent && (!Number.isFinite(durationDays) || durationDays <= 0)) return;
+    post("/api/admin/ban", { userId: u.id, banned: true, reason, permanent, durationDays });
   };
 
   const grantCredits = (u: AdminUser) => {
@@ -146,6 +218,7 @@ export default function AdminDashboard() {
         {([
           ["overview", "📊 Vue d'ensemble"],
           ["users", `👥 Comptes (${users.length})`],
+          ["moderation", `🛡️ Modération (${moderationCases.length + appeals.length})`],
           ["reports", `🚩 Signalements (${reports.length})`],
           ["purchases", "🧾 Achats"],
         ] as [Tab, string][]).map(([id, label]) => (
@@ -257,8 +330,19 @@ export default function AdminDashboard() {
                     <td style={td}>{u.credits}</td>
                     <td style={td}>{EUR(u.totalSpentCts)}</td>
                     <td style={td}>
-                      {u.banned ? <span style={{ color: "#ff8ba0" }}>banni</span> : "actif"}
+                      {u.banned ? (
+                        <span style={{ color: "#ff8ba0" }}>
+                          banni
+                          {u.banExpiresAt ? ` jusqu'au ${new Date(u.banExpiresAt).toLocaleDateString("fr-FR")}` : " definitif"}
+                        </span>
+                      ) : "actif"}
                       {muted[u.id] && <span style={{ color: "var(--muted)" }}> · muet</span>}
+                      {u.banAppealStatus === "pending" && <span style={{ color: "var(--accent)" }}> · contestation</span>}
+                      {u.banReason && (
+                        <div style={{ color: "var(--muted)", fontSize: 12, maxWidth: 220 }}>
+                          {u.banReason}
+                        </div>
+                      )}
                     </td>
                     <td style={td}>
                       <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
@@ -292,6 +376,148 @@ export default function AdminDashboard() {
             </table>
           </div>
         </>
+      )}
+
+      {/* ── Modération automatique + contestations ── */}
+      {tab === "moderation" && (
+        <div style={{ display: "grid", gap: 12 }}>
+          {appeals.length > 0 && (
+            <div className="pd-panel" style={{ padding: 14, display: "grid", gap: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>Contestations à traiter</h2>
+              {appeals.map((a) => (
+                <div key={a.id} style={{ borderTop: "1px solid var(--border)", paddingTop: 10, display: "grid", gap: 6, fontSize: 14 }}>
+                  <div>
+                    <strong>{a.pseudo}</strong>{" "}
+                    <span style={{ color: "var(--muted)" }}>{a.email || "—"}</span>
+                  </div>
+                  <div><strong>Sanction :</strong> {a.banReason || "—"}</div>
+                  <div style={{ color: "var(--muted)" }}>
+                    {a.banSeverity === "permanent_ban" ? "Ban définitif" : "Ban temporaire"}
+                    {a.banExpiresAt ? ` · fin ${new Date(a.banExpiresAt).toLocaleString("fr-FR")}` : ""}
+                    {a.banAppealedAt ? ` · contesté le ${new Date(a.banAppealedAt).toLocaleString("fr-FR")}` : ""}
+                  </div>
+                  <div className="pd-panel" style={{ padding: 10, background: "var(--panel-2)" }}>
+                    {a.banAppealText}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button
+                      className="pd-btn pd-mini"
+                      style={{ borderColor: "#37d67a" }}
+                      onClick={() => post("/api/admin/moderation", { action: "accept_appeal", userId: a.id })}
+                    >
+                      Débannir
+                    </button>
+                    <button
+                      className="pd-btn pd-mini"
+                      onClick={() => {
+                        const note = prompt("Note admin pour confirmer le ban définitif ?", a.banReason || "");
+                        if (note == null) return;
+                        post("/api/admin/moderation", { action: "confirm_permanent", userId: a.id, note });
+                      }}
+                    >
+                      Ban définitif
+                    </button>
+                    <button
+                      className="pd-btn pd-mini"
+                      style={{ borderColor: "#ff5c7a" }}
+                      onClick={() => {
+                        if (!confirm(`Rejeter la contestation et supprimer le compte ${a.pseudo} ?`)) return;
+                        const note = prompt("Note admin :", "Contestation rejetée.");
+                        post("/api/admin/moderation", { action: "reject_appeal_delete", userId: a.id, note });
+                      }}
+                    >
+                      Rejeter + supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {moderationCases.length === 0 && appeals.length === 0 && (
+            <div className="pd-panel" style={{ padding: 20, color: "var(--muted)", textAlign: "center" }}>
+              Aucun dossier de modération en attente.
+            </div>
+          )}
+
+          {moderationCases.map((c) => (
+            <div key={c.id} className="pd-panel" style={{ padding: 14, display: "grid", gap: 7, fontSize: 14 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <strong>{c.source === "bot" ? "Bot" : c.source} · {c.category}</strong>
+                <span style={{ color: c.severity === "permanent_ban" ? "#ff8ba0" : c.severity === "temporary_ban" ? "#ffd166" : "var(--muted)" }}>
+                  {c.severity}
+                </span>
+                <span style={{ color: "var(--muted)" }}>
+                  {new Date(c.createdAt).toLocaleString("fr-FR")}
+                </span>
+              </div>
+              <div>
+                <strong>Compte :</strong>{" "}
+                {c.user ? `${c.user.pseudo} (${c.user.email || "sans email"})` : "compte supprimé ou inconnu"}
+              </div>
+              <div><strong>Raison :</strong> {c.reason}</div>
+              {c.details && <div style={{ color: "var(--muted)", whiteSpace: "pre-wrap" }}>{c.details}</div>}
+              {c.text && (
+                <div className="pd-panel" style={{ padding: 10, background: "var(--panel-2)", whiteSpace: "pre-wrap" }}>
+                  {c.text}
+                </div>
+              )}
+              {c.link && <div style={{ color: "var(--muted)", wordBreak: "break-all" }}>Lien : {c.link}</div>}
+              {c.x !== null && c.y !== null && (
+                <div style={{ color: "var(--muted)" }}>Pixel : ({c.x}, {c.y})</div>
+              )}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {c.targetType === "pixel" && c.x !== null && c.y !== null && (
+                  <>
+                    <button
+                      className="pd-btn pd-mini"
+                      style={{ borderColor: "#ff5c7a" }}
+                      onClick={() => post("/api/admin/moderation", { id: c.id, action: "delete_pixel" })}
+                    >
+                      Supprimer le pixel
+                    </button>
+                    <Link className="pd-btn pd-mini" style={{ textDecoration: "none" }} href={`/?x=${c.x}&y=${c.y}&z=20`}>
+                      Voir sur la carte
+                    </Link>
+                  </>
+                )}
+                {c.targetType === "chat" && c.targetId && (
+                  <button
+                    className="pd-btn pd-mini"
+                    style={{ borderColor: "#ff5c7a" }}
+                    onClick={() => post("/api/admin/moderation", { id: c.id, action: "delete_chat" })}
+                  >
+                    Supprimer le message
+                  </button>
+                )}
+                {c.user && (
+                  <>
+                    <button
+                      className="pd-btn pd-mini"
+                      style={{ borderColor: "#37d67a" }}
+                      onClick={() => post("/api/admin/moderation", { id: c.id, action: "unban_user" })}
+                    >
+                      Débannir
+                    </button>
+                    <button
+                      className="pd-btn pd-mini"
+                      onClick={() => {
+                        const note = prompt("Note admin pour confirmer le ban définitif ?", c.reason);
+                        if (note == null) return;
+                        post("/api/admin/moderation", { id: c.id, action: "confirm_permanent", note });
+                      }}
+                    >
+                      Ban définitif
+                    </button>
+                  </>
+                )}
+                <button className="pd-btn pd-mini" onClick={() => post("/api/admin/moderation", { id: c.id, action: "resolve" })}>
+                  Résoudre
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* ── Signalements ── */}

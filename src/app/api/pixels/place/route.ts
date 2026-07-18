@@ -6,6 +6,7 @@ import { cleanLink, cleanText } from "@/lib/security";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { addXp, awardAchievements, levelAchievements, XP_PLACE } from "@/lib/game";
 import { bumpQuests } from "@/lib/quests";
+import { applyModerationVerdict, moderateContent, publicBanMessage } from "@/lib/moderation";
 
 class PlaceError extends Error {
   constructor(public status: number, message: string) {
@@ -32,13 +33,58 @@ export async function POST(req: Request) {
   if (!isValidHexColor(color))
     return NextResponse.json({ error: "Couleur invalide." }, { status: 400 });
 
+  const rawLink = String(body.link ?? "").trim();
   const link = cleanLink(body.link);
-  if (link === "invalid")
+  if (link === "invalid") {
+    if (rawLink && !isAdminUser(user)) {
+      const moderation = moderateContent({ targetType: "pixel", link: rawLink });
+      if (moderation.decision === "ban") {
+        await applyModerationVerdict({
+          userId: user.id,
+          source: "bot",
+          targetType: "pixel",
+          x,
+          y,
+          link: rawLink,
+          verdict: moderation,
+        });
+        return NextResponse.json(
+          { error: publicBanMessage(moderation) },
+          { status: 403 },
+        );
+      }
+    }
     return NextResponse.json(
       { error: "Lien invalide (http:// ou https:// uniquement)." },
       { status: 400 },
     );
+  }
   const text = cleanText(body.text, 140);
+
+  if (!isAdminUser(user)) {
+    const moderation = moderateContent({ targetType: "pixel", text, link });
+    if (moderation.decision !== "allow") {
+      await applyModerationVerdict({
+        userId: user.id,
+        source: "bot",
+        targetType: "pixel",
+        x,
+        y,
+        text,
+        link,
+        verdict: moderation,
+      });
+      return NextResponse.json(
+        {
+          error:
+            moderation.decision === "ban"
+              ? publicBanMessage(moderation)
+              : "Contenu suspect bloque et transmis aux administrateurs.",
+        },
+        { status: moderation.decision === "ban" ? 403 : 400 },
+      );
+    }
+  }
 
   // Effet spécial (consomme un item, remplace le coût en crédit).
   let effect: string | null = body.effect ? String(body.effect) : null;

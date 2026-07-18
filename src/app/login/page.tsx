@@ -34,7 +34,7 @@ export default function LoginPage() {
       redirect: false,
     });
     setBusy(false);
-    if (res?.error) setErr("Email ou mot de passe incorrect (ou compte banni).");
+    if (res?.error) setErr("Email ou mot de passe incorrect.");
     else router.push("/");
   };
 

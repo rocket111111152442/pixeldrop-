@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 // puis crée le compte admin (uniquement si base vierge, ou si demandé par l'admin).
 // Rejouable sans danger : sert aussi de migration après une mise à jour du code.
 
-const SCHEMA_VERSION = "4";
+const SCHEMA_VERSION = "5";
 
 const DDL: string[] = [
   // ── Tables de base (v1) ──
@@ -65,6 +65,18 @@ const DDL: string[] = [
   `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referredById" TEXT`,
   // v4 : preuve d'acceptation des conditions générales
   `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "termsAcceptedAt" TIMESTAMP(3)`,
+  // v5 : sanctions, contestations et modération automatique
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "bannedAt" TIMESTAMP(3)`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banExpiresAt" TIMESTAMP(3)`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banReason" TEXT`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banCategory" TEXT`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banSource" TEXT`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banSeverity" TEXT`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banAppealDeadline" TIMESTAMP(3)`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banAppealText" TEXT`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banAppealedAt" TIMESTAMP(3)`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banAppealStatus" TEXT NOT NULL DEFAULT 'none'`,
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banDeleteAfter" TIMESTAMP(3)`,
 
   // ── v2 : colonnes Pixel / Purchase ──
   `ALTER TABLE "Pixel" ADD COLUMN IF NOT EXISTS "effect" TEXT`,
@@ -73,8 +85,12 @@ const DDL: string[] = [
   // ── v2 : nouvelles tables ──
   `CREATE TABLE IF NOT EXISTS "ChatMessage" (
     "id" TEXT NOT NULL, "userId" TEXT NOT NULL, "text" TEXT NOT NULL,
+    "deletedAt" TIMESTAMP(3), "deletedReason" TEXT, "deletedById" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "ChatMessage_pkey" PRIMARY KEY ("id"))`,
+  `ALTER TABLE "ChatMessage" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3)`,
+  `ALTER TABLE "ChatMessage" ADD COLUMN IF NOT EXISTS "deletedReason" TEXT`,
+  `ALTER TABLE "ChatMessage" ADD COLUMN IF NOT EXISTS "deletedById" TEXT`,
   `CREATE TABLE IF NOT EXISTS "Report" (
     "id" TEXT NOT NULL, "x" INTEGER NOT NULL, "y" INTEGER NOT NULL, "reason" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'open', "reporterId" TEXT,
@@ -83,6 +99,29 @@ const DDL: string[] = [
   `CREATE TABLE IF NOT EXISTS "Setting" (
     "key" TEXT NOT NULL, "value" TEXT NOT NULL,
     CONSTRAINT "Setting_pkey" PRIMARY KEY ("key"))`,
+
+  `CREATE TABLE IF NOT EXISTS "ModerationCase" (
+    "id" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "targetType" TEXT NOT NULL,
+    "targetId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'open',
+    "userId" TEXT,
+    "x" INTEGER,
+    "y" INTEGER,
+    "link" TEXT,
+    "text" TEXT,
+    "category" TEXT NOT NULL,
+    "severity" TEXT NOT NULL,
+    "action" TEXT NOT NULL,
+    "reason" TEXT NOT NULL,
+    "details" TEXT,
+    "resolvedAt" TIMESTAMP(3),
+    "resolvedById" TEXT,
+    "adminNote" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "ModerationCase_pkey" PRIMARY KEY ("id"))`,
 
   // ── v3 : quêtes collectives ──
   `CREATE TABLE IF NOT EXISTS "Quest" (
@@ -121,7 +160,12 @@ const DDL: string[] = [
   `CREATE INDEX IF NOT EXISTS "Purchase_createdAt_idx" ON "Purchase"("createdAt")`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "InventoryItem_userId_sku_key" ON "InventoryItem"("userId", "sku")`,
   `CREATE INDEX IF NOT EXISTS "ChatMessage_createdAt_idx" ON "ChatMessage"("createdAt")`,
+  `CREATE INDEX IF NOT EXISTS "ChatMessage_deletedAt_idx" ON "ChatMessage"("deletedAt")`,
   `CREATE INDEX IF NOT EXISTS "Report_status_idx" ON "Report"("status")`,
+  `CREATE INDEX IF NOT EXISTS "ModerationCase_status_idx" ON "ModerationCase"("status")`,
+  `CREATE INDEX IF NOT EXISTS "ModerationCase_userId_idx" ON "ModerationCase"("userId")`,
+  `CREATE INDEX IF NOT EXISTS "ModerationCase_createdAt_idx" ON "ModerationCase"("createdAt")`,
+  `CREATE INDEX IF NOT EXISTS "ModerationCase_targetType_targetId_idx" ON "ModerationCase"("targetType", "targetId")`,
 
   // ── Clés étrangères (ignorées si déjà présentes) ──
   `DO $$ BEGIN ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
@@ -131,10 +175,27 @@ const DDL: string[] = [
   `DO $$ BEGIN ALTER TABLE "InventoryItem" ADD CONSTRAINT "InventoryItem_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
   `DO $$ BEGIN ALTER TABLE "ChatMessage" ADD CONSTRAINT "ChatMessage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
   `DO $$ BEGIN ALTER TABLE "Report" ADD CONSTRAINT "Report_reporterId_fkey" FOREIGN KEY ("reporterId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+  `DO $$ BEGIN ALTER TABLE "ModerationCase" ADD CONSTRAINT "ModerationCase_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+  `DO $$ BEGIN ALTER TABLE "ModerationCase" ADD CONSTRAINT "ModerationCase_resolvedById_fkey" FOREIGN KEY ("resolvedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
 ];
 
 async function handle(req: Request) {
   if (!rateLimit(`setup:${ipOf(req)}`, 5, 60_000)) return tooMany();
+
+  const url = new URL(req.url);
+  const setupToken = process.env.SETUP_TOKEN;
+  const suppliedToken = req.headers.get("x-setup-token") || url.searchParams.get("token");
+  const caller = await getCurrentUser().catch(() => null);
+  const authorized =
+    isAdminUser(caller) ||
+    (!!setupToken && suppliedToken === setupToken);
+
+  if (!authorized) {
+    return NextResponse.json(
+      { error: "Setup verrouillé : connecte-toi en admin ou fournis SETUP_TOKEN." },
+      { status: 403 },
+    );
+  }
 
   const errors: string[] = [];
   let applied = 0;
@@ -161,12 +222,21 @@ async function handle(req: Request) {
   // sinon uniquement si l'appelant est déjà admin (remise à jour du mot de passe).
   let admin = "inchangé";
   try {
-    const userCount = await prisma.user.count();
-    const caller = await getCurrentUser().catch(() => null);
-    if (userCount === 0 || isAdminUser(caller)) {
+    if (authorized) {
       const email = (process.env.ADMIN_EMAIL || "admin@pixeldrop.app").toLowerCase();
-      const password = process.env.ADMIN_PASSWORD || "changeme123";
+      const password = process.env.ADMIN_PASSWORD;
       const pseudoBase = process.env.ADMIN_PSEUDO || "Admin";
+      if (!password || password.length < 12) {
+        admin = "ignoré: ADMIN_PASSWORD manquant ou trop court";
+        return NextResponse.json({
+          ok: errors.length === 0,
+          schemaVersion: SCHEMA_VERSION,
+          applied,
+          total: DDL.length,
+          admin,
+          errors,
+        });
+      }
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const existing = await prisma.user.findUnique({ where: { email } });
