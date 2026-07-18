@@ -18,6 +18,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  // Acceptation des CGU : exigée côté serveur aussi, une case à cocher
+  // dans le navigateur pouvant être contournée.
+  if (body.acceptTerms !== true) {
+    return NextResponse.json(
+      { error: "Tu dois accepter les conditions générales pour créer un compte." },
+      { status: 400 },
+    );
+  }
+
   const email = cleanEmail(body.email);
   const password = String(body.password || "");
   const refCode = String(body.referral || "").trim().toUpperCase().slice(0, 20);
@@ -70,6 +79,7 @@ export async function POST(req: Request) {
         credits: FREE_PIXELS + (referrer ? REFERRAL_BONUS : 0),
         isAdmin,
         referredById: referrer?.id ?? null,
+        termsAcceptedAt: new Date(), // preuve d'acceptation des CGU
       },
     });
     if (referrer) {

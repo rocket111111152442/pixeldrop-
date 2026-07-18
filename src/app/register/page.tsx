@@ -32,6 +32,7 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [referral, setReferral] = useState(params.get("ref") || "");
   const [website, setWebsite] = useState(""); // honeypot anti-bot
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [providers, setProviders] = useState<Record<string, unknown>>({});
@@ -54,7 +55,7 @@ function RegisterForm() {
     const r = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pseudo, email, password, referral, website }),
+      body: JSON.stringify({ pseudo, email, password, referral, website, acceptTerms }),
     });
     const data = await r.json();
     if (!r.ok) {
@@ -118,8 +119,40 @@ function RegisterForm() {
             style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
             aria-hidden="true"
           />
+          {/* Acceptation obligatoire des conditions */}
+          <label
+            style={{
+              display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13,
+              lineHeight: 1.45, background: "var(--panel-2)", padding: "10px 12px",
+              borderRadius: 10, border: `1px solid ${acceptTerms ? "var(--accent)" : "var(--border)"}`,
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              required
+              style={{ marginTop: 2, width: 17, height: 17, flexShrink: 0 }}
+            />
+            <span>
+              J&apos;ai lu et j&apos;accepte les{" "}
+              <Link href="/conditions" target="_blank" style={{ color: "var(--accent)", fontWeight: 600 }}>
+                conditions générales d&apos;utilisation et de vente
+              </Link>
+              . Je reconnais que les cailloux et objets achetés sont des contenus
+              numériques sans valeur monétaire, non remboursables.
+            </span>
+          </label>
+
           {err && <div style={{ color: "#ff8ba0", fontSize: 13 }}>{err}</div>}
-          <button className="pd-btn pd-btn-primary" type="submit" disabled={busy} style={{ width: "100%" }}>
+          <button
+            className="pd-btn pd-btn-primary"
+            type="submit"
+            disabled={busy || !acceptTerms}
+            style={{ width: "100%" }}
+            title={!acceptTerms ? "Tu dois accepter les conditions pour créer ton compte" : undefined}
+          >
             {busy ? "Création…" : "Créer mon compte"}
           </button>
         </form>

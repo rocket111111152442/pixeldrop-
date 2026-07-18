@@ -244,7 +244,16 @@ export default function Landing() {
       </section>
 
       <footer className="pd-foot">
-        🪨 PebbleDrop — pose ton caillou, laisse ta trace.
+        <div>🪨 PebbleDrop — pose ton caillou, laisse ta trace.</div>
+        <div style={{ marginTop: 8, fontSize: 13 }}>
+          <Link href="/conditions" style={{ color: "var(--accent)" }}>
+            Conditions générales
+          </Link>
+          <span style={{ margin: "0 8px", opacity: 0.5 }}>·</span>
+          <Link href="/carte" style={{ color: "var(--accent)" }}>
+            La carte
+          </Link>
+        </div>
       </footer>
 
       <LandingStyles />

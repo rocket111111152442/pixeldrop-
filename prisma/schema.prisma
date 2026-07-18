@@ -51,6 +51,9 @@ model User {
   referralCode String? @unique
   referredById String?
 
+  // Preuve d'acceptation des conditions générales
+  termsAcceptedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

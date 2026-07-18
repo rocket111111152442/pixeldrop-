@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 // puis crée le compte admin (uniquement si base vierge, ou si demandé par l'admin).
 // Rejouable sans danger : sert aussi de migration après une mise à jour du code.
 
-const SCHEMA_VERSION = "3";
+const SCHEMA_VERSION = "4";
 
 const DDL: string[] = [
   // ── Tables de base (v1) ──
@@ -63,6 +63,8 @@ const DDL: string[] = [
   `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "nameColor" TEXT`,
   `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referralCode" TEXT`,
   `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referredById" TEXT`,
+  // v4 : preuve d'acceptation des conditions générales
+  `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "termsAcceptedAt" TIMESTAMP(3)`,
 
   // ── v2 : colonnes Pixel / Purchase ──
   `ALTER TABLE "Pixel" ADD COLUMN IF NOT EXISTS "effect" TEXT`,
