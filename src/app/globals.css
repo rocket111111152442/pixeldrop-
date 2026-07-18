@@ -94,7 +94,96 @@ button {
   position: fixed;
   inset: 0;
   touch-action: none;
-  background-color: var(--canvas-bg);
+  /* Transparent : le décor animé (.pd-backdrop) est visible en dessous. */
+  background: transparent;
+  z-index: 1;
+}
+
+/* ── Décor animé derrière la clairière ── */
+.pd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(180deg, #dcebe4 0%, #eaf2ea 55%, #f2f5ee 100%);
+}
+.pd-backdrop .pd-scene {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+}
+
+/* Halo de soleil qui respire */
+.pd-sunglow {
+  position: absolute;
+  top: -12%;
+  right: 8%;
+  width: 46vmin;
+  height: 46vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 249, 224, 0.9), rgba(255, 249, 224, 0) 68%);
+  animation: pdSun 11s ease-in-out infinite;
+}
+@keyframes pdSun {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+/* Bancs de brume qui dérivent */
+.pd-mist {
+  position: absolute;
+  left: -25%;
+  width: 150%;
+  height: 26%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.62),
+    rgba(255, 255, 255, 0) 70%
+  );
+  filter: blur(8px);
+}
+.pd-mist-1 {
+  bottom: 30%;
+  animation: pdDrift 46s ease-in-out infinite alternate;
+}
+.pd-mist-2 {
+  bottom: 14%;
+  height: 20%;
+  opacity: 0.7;
+  animation: pdDrift 68s ease-in-out infinite alternate-reverse;
+}
+@keyframes pdDrift {
+  from { transform: translateX(-7%); }
+  to { transform: translateX(7%); }
+}
+
+/* Pollen / poussière lumineuse qui monte */
+.pd-motes {
+  position: absolute;
+  inset: 0;
+}
+.pd-motes span {
+  position: absolute;
+  bottom: -6%;
+  border-radius: 50%;
+  opacity: 0;
+  filter: blur(0.4px);
+  animation-name: pdFloat;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes pdFloat {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  12% { opacity: 0.95; }
+  88% { opacity: 0.6; }
+  100% { transform: translate(var(--drift, 0px), -112vh) scale(1.15); opacity: 0; }
+}
+
+/* Respect des préférences d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .pd-sunglow, .pd-mist, .pd-motes span { animation: none; }
+  .pd-motes { display: none; }
 }
 
 canvas.pd-canvas {

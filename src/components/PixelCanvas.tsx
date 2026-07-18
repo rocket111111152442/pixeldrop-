@@ -144,11 +144,25 @@ export default function PixelCanvas({
       propsRef.current;
     const now = Date.now();
 
-    // Fond
+    // Sol de la clairière (terre/gravier). Hors de la grille, on laisse
+    // transparent pour laisser voir le décor animé de forêt.
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = "#0e1424";
-    ctx.fillRect(panX, panY, GRID_WIDTH * scale, GRID_HEIGHT * scale);
+    const worldW = GRID_WIDTH * scale;
+    const worldH = GRID_HEIGHT * scale;
+    const soil = ctx.createLinearGradient(panX, panY, panX, panY + worldH);
+    soil.addColorStop(0, "#d7cfba");
+    soil.addColorStop(1, "#c6bda6");
+    ctx.fillStyle = soil;
+    ctx.fillRect(panX, panY, worldW, worldH);
+    // Ombre portée douce pour détacher la clairière du décor
+    ctx.save();
+    ctx.shadowColor = "rgba(28, 43, 33, 0.28)";
+    ctx.shadowBlur = 24;
+    ctx.strokeStyle = "rgba(28, 43, 33, 0.18)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(panX, panY, worldW, worldH);
+    ctx.restore();
 
     // Pixels
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * panX, dpr * panY);

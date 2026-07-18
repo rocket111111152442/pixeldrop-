@@ -4,11 +4,17 @@
 // sol de cailloux. 100 % SVG déterministe (aucun aléatoire → pas de
 // désynchronisation serveur/client à l'hydratation).
 
-// Pseudo-aléatoire déterministe : même résultat serveur et client.
+// Pseudo-aléatoire déterministe : uniquement des opérations entières, donc
+// bit-à-bit identique côté serveur et côté navigateur (Math.sin ne l'est pas,
+// ce qui provoquait une erreur d'hydratation React).
 function rnd(i: number, seed = 1): number {
-  const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
-  return x - Math.floor(x);
+  let t = (i * 374761393 + seed * 668265263) | 0;
+  t = Math.imul(t ^ (t >>> 13), 1274126177) | 0;
+  return ((t ^ (t >>> 16)) >>> 0) / 4294967296;
 }
+
+// Arrondi court : le HTML servi et celui recalculé sont strictement identiques.
+const r2 = (v: number) => Math.round(v * 100) / 100;
 
 function Trees({
   count,
@@ -29,24 +35,24 @@ function Trees({
 }) {
   const trees = [];
   for (let i = 0; i < count; i++) {
-    const x = (i / count) * 1500 - 20 + rnd(i, seed) * 22;
-    const h = minH + rnd(i, seed + 5) * (maxH - minH);
-    const w = h * 0.42;
+    const x = r2((i / count) * 1500 - 20 + rnd(i, seed) * 22);
+    const h = r2(minH + rnd(i, seed + 5) * (maxH - minH));
+    const w = r2(h * 0.42);
     // Sapin : trois étages de branches.
     trees.push(
       <path
         key={i}
-        d={`M${x} ${baseY}
-            L${x - w / 2} ${baseY}
-            L${x} ${baseY - h * 0.42}
-            L${x - w * 0.42} ${baseY - h * 0.38}
-            L${x} ${baseY - h * 0.72}
-            L${x - w * 0.3} ${baseY - h * 0.68}
-            L${x} ${baseY - h}
-            L${x + w * 0.3} ${baseY - h * 0.68}
-            L${x + w * 0.42} ${baseY - h * 0.38}
-            L${x + w / 2} ${baseY}
-            Z`}
+        d={
+          `M${x} ${baseY} L${r2(x - w / 2)} ${baseY}` +
+          ` L${x} ${r2(baseY - h * 0.42)}` +
+          ` L${r2(x - w * 0.42)} ${r2(baseY - h * 0.38)}` +
+          ` L${x} ${r2(baseY - h * 0.72)}` +
+          ` L${r2(x - w * 0.3)} ${r2(baseY - h * 0.68)}` +
+          ` L${x} ${r2(baseY - h)}` +
+          ` L${r2(x + w * 0.3)} ${r2(baseY - h * 0.68)}` +
+          ` L${r2(x + w * 0.42)} ${r2(baseY - h * 0.38)}` +
+          ` L${r2(x + w / 2)} ${baseY} Z`
+        }
         fill={color}
       />,
     );
@@ -58,17 +64,17 @@ function Pebbles({ seed }: { seed: number }) {
   const stones = [];
   const tones = ["#b3aca0", "#9e968a", "#c7c1b6", "#756c61", "#d9d4ca", "#8a8175"];
   for (let i = 0; i < 46; i++) {
-    const x = rnd(i, seed) * 1440;
-    const y = 300 + rnd(i, seed + 3) * 90;
-    const r = 4 + rnd(i, seed + 7) * 13;
+    const x = r2(rnd(i, seed) * 1440);
+    const y = r2(300 + rnd(i, seed + 3) * 90);
+    const r = r2(4 + rnd(i, seed + 7) * 13);
     stones.push(
       <g key={i}>
-        <ellipse cx={x} cy={y} rx={r} ry={r * 0.68} fill={tones[i % tones.length]} />
+        <ellipse cx={x} cy={y} rx={r} ry={r2(r * 0.68)} fill={tones[i % tones.length]} />
         <ellipse
-          cx={x - r * 0.25}
-          cy={y - r * 0.22}
-          rx={r * 0.35}
-          ry={r * 0.2}
+          cx={r2(x - r * 0.25)}
+          cy={r2(y - r * 0.22)}
+          rx={r2(r * 0.35)}
+          ry={r2(r * 0.2)}
           fill="#ffffff"
           opacity="0.3"
         />

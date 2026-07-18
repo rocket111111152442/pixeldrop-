@@ -11,6 +11,7 @@ import PixelCanvas, {
   type Focus,
 } from "@/components/PixelCanvas";
 import ChatPanel from "@/components/ChatPanel";
+import CanvasBackdrop from "@/components/CanvasBackdrop";
 import QuestsPanel from "@/components/QuestsPanel";
 import ProfileModal from "@/components/ProfileModal";
 import { LogoMark } from "@/components/Logo";
@@ -931,6 +932,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   // ─────────────────────────── RENDU ───────────────────────────
   return (
     <main>
+      <CanvasBackdrop />
       <PixelCanvas
         pixels={pixelsRef.current}
         version={version}
