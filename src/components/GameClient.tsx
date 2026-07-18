@@ -70,18 +70,26 @@ type Toast = { id: number; msg: string; type: "error" | "success" | "gold" };
 
 type Recent = { x: number; y: number; color: string; pseudo: string; at: string };
 
+// Les libellés suivent le thème « cailloux » de la boutique.
 const TOOL_META: Record<Tool, { emoji: string; label: string; inv?: string }> = {
-  place: { emoji: "🖌️", label: "Poser" },
+  place: { emoji: "🪨", label: "Poser" },
   inspect: { emoji: "🔍", label: "Infos" },
-  bomb: { emoji: "💣", label: "Bombe", inv: "bomb" },
-  megabomb: { emoji: "💥", label: "Méga", inv: "mega_bomb" },
-  nuke: { emoji: "☢️", label: "Nucléaire", inv: "nuke" },
-  bucket: { emoji: "🪣", label: "Pot", inv: "bucket" },
-  swap: { emoji: "🎭", label: "Recolore", inv: "swap" },
-  move: { emoji: "✈️", label: "Déplace", inv: "mover" },
-  erase: { emoji: "🧽", label: "Gomme", inv: "eraser" },
-  pick: { emoji: "💉", label: "Pipette" },
+  pick: { emoji: "💧", label: "Pipette" },
+  bomb: { emoji: "⛏️", label: "Pioche", inv: "bomb" },
+  megabomb: { emoji: "🔨", label: "Masse", inv: "mega_bomb" },
+  nuke: { emoji: "🧨", label: "Dynamite", inv: "nuke" },
+  bucket: { emoji: "🪣", label: "Seau", inv: "bucket" },
+  swap: { emoji: "🪶", label: "Polissoir", inv: "swap" },
+  move: { emoji: "🛞", label: "Brouette", inv: "mover" },
+  erase: { emoji: "🍂", label: "Râteau", inv: "eraser" },
 };
+
+// Pierres rares posables (consomment un item au lieu d'un caillou).
+const EFFECT_ITEMS: { id: "golden" | "rainbow" | "diamond"; emoji: string; label: string }[] = [
+  { id: "golden", emoji: "⭐", label: "Pépite" },
+  { id: "rainbow", emoji: "🌈", label: "Opale" },
+  { id: "diamond", emoji: "💎", label: "Diamant" },
+];
 
 function lsGet(key: string, fallback: string): string {
   if (typeof window === "undefined") return fallback;
@@ -1152,9 +1160,57 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
                   <button className="pd-btn pd-mini" onClick={() => setMoveFrom(null)}>annuler</button>
                 </div>
               )}
-              <div style={{ marginTop: 8 }}>
+
+              {/* Pierres rares & protection : s'appliquent au prochain caillou posé */}
+              <div style={{ marginTop: 10, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 6 }}>
+                  💎 Pierres rares & protection <span style={{ fontWeight: 400 }}>(sur le prochain caillou posé)</span>
+                </div>
+                <div className="pd-tools">
+                  <button
+                    className={`pd-btn pd-tool ${effectSel === "" ? "on" : ""}`}
+                    onClick={() => { setEffectSel(""); sfx("click"); }}
+                    title="Caillou normal"
+                  >
+                    <span className="pd-tool-emoji">🪨</span>
+                    <span className="pd-tool-label">Normal</span>
+                  </button>
+                  {EFFECT_ITEMS.map((fx) => {
+                    const qty = isAdmin ? "∞" : String(inv[fx.id] || 0);
+                    const disabled = !isAdmin && !(inv[fx.id] > 0);
+                    return (
+                      <button
+                        key={fx.id}
+                        className={`pd-btn pd-tool ${effectSel === fx.id ? "on" : ""}`}
+                        disabled={disabled}
+                        onClick={() => { setEffectSel(fx.id); setTool("place"); sfx("click"); }}
+                        title={`${fx.label} — pose sans consommer de caillou`}
+                      >
+                        <span className="pd-tool-emoji">{fx.emoji}</span>
+                        <span className="pd-tool-label">{fx.label}</span>
+                        <span className="pd-tool-qty">{qty}</span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    className={`pd-btn pd-tool ${useShield ? "on" : ""}`}
+                    disabled={!isAdmin && !(inv.shield > 0)}
+                    onClick={() => { setUseShield((s) => !s); sfx("click"); }}
+                    title="Mousse protectrice : résiste aux pioches"
+                  >
+                    <span className="pd-tool-emoji">🛡️</span>
+                    <span className="pd-tool-label">Mousse</span>
+                    <span className="pd-tool-qty">{isAdmin ? "∞" : inv.shield || 0}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <Link href="/boutique" className="pd-btn pd-btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
-                  🛒 Acheter des items
+                  🛒 Boutique
+                </Link>
+                <Link href="/profil" className="pd-btn pd-mini" style={{ textDecoration: "none" }}>
+                  👑 Badges, titres & couleurs
                 </Link>
               </div>
             </div>
@@ -1175,36 +1231,8 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
-              <div className="pd-fx-row">
-                <span style={{ fontSize: 13, color: "var(--muted)" }}>Effet :</span>
-                {([
-                  ["", "Aucun", null],
-                  ["golden", "⭐", "golden"],
-                  ["rainbow", "🌈", "rainbow"],
-                  ["diamond", "💎", "diamond"],
-                ] as [EffectSel, string, string | null][]).map(([val, lab, sku]) => {
-                  const qty = sku ? (isAdmin ? "∞" : String(inv[sku] || 0)) : null;
-                  const disabled = !!sku && !isAdmin && !(inv[sku] > 0);
-                  return (
-                    <button
-                      key={val || "none"}
-                      className={`pd-btn pd-mini ${effectSel === val ? "pd-on" : ""}`}
-                      disabled={disabled}
-                      onClick={() => setEffectSel(val)}
-                    >
-                      {lab}{qty !== null ? ` ${qty}` : ""}
-                    </button>
-                  );
-                })}
-                <label style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 13, opacity: isAdmin || inv.shield > 0 ? 1 : 0.5 }}>
-                  <input
-                    type="checkbox"
-                    checked={useShield}
-                    disabled={!isAdmin && !(inv.shield > 0)}
-                    onChange={(e) => setUseShield(e.target.checked)}
-                  />
-                  🛡️ ({isAdmin ? "∞" : inv.shield || 0})
-                </label>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                💎 Les pierres rares et la mousse 🛡️ se choisissent dans l&apos;onglet 🛠️.
               </div>
               <div className="pd-fx-row" style={{ fontSize: 13 }}>
                 <label><input type="checkbox" checked={soundOn} onChange={(e) => { setSoundOn(e.target.checked); lsSet("pd_sound", e.target.checked ? "1" : "0"); }} /> 🔊 Sons</label>
