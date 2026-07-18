@@ -11,7 +11,7 @@ import PixelCanvas, {
   type Focus,
 } from "@/components/PixelCanvas";
 import ChatPanel from "@/components/ChatPanel";
-import CanvasBackdrop from "@/components/CanvasBackdrop";
+import CanvasBackdrop, { type BackdropHandle } from "@/components/CanvasBackdrop";
 import QuestsPanel from "@/components/QuestsPanel";
 import ProfileModal from "@/components/ProfileModal";
 import { LogoMark } from "@/components/Logo";
@@ -154,6 +154,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   const [isMobile, setIsMobile] = useState(false);
 
   const viewRef = useRef<ViewInfo | null>(null);
+  const backdropRef = useRef<BackdropHandle | null>(null);
   const canvasElRef = useRef<HTMLCanvasElement | null>(null);
   const minimapRef = useRef<HTMLCanvasElement | null>(null);
   const focusKeyRef = useRef(1);
@@ -396,6 +397,8 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   const onViewChange = useCallback(
     (v: ViewInfo) => {
       viewRef.current = v;
+      // Parallaxe du décor (via ref : aucun rendu React déclenché).
+      backdropRef.current?.setShift(v.panX, v.panY);
       if (minimapOn) drawMinimap();
     },
     [minimapOn, drawMinimap],
@@ -932,7 +935,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   // ─────────────────────────── RENDU ───────────────────────────
   return (
     <main>
-      <CanvasBackdrop />
+      <CanvasBackdrop ref={backdropRef} />
       <PixelCanvas
         pixels={pixelsRef.current}
         version={version}

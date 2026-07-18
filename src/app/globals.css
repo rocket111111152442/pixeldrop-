@@ -114,6 +114,19 @@ button {
   opacity: 1;
 }
 
+/* Couches de parallaxe : chacune se déplace à une vitesse différente,
+   ce qui crée la sensation de profondeur quand on navigue sur la carte. */
+.pd-parallax {
+  position: absolute;
+  inset: -6%;
+  will-change: transform;
+  transform: translate3d(0, 0, 0) scale(1.1);
+}
+.pd-near {
+  transform: translate3d(0, 0, 0);
+  inset: 0;
+}
+
 /* Halo de soleil qui respire */
 .pd-sunglow {
   position: absolute;
