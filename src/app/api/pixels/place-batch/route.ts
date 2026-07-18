@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isInsideGrid, isValidHexColor } from "@/lib/canvas-config";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { addXp } from "@/lib/game";
+import { bumpQuests } from "@/lib/quests";
 
 const MAX_CELLS = 500;
 
@@ -83,6 +84,11 @@ export async function POST(req: Request) {
 
     if (result.placed.length > 0) {
       addXp(user.id, 2 * result.placed.length).catch(() => {});
+      bumpQuests("place", {
+        count: result.placed.length,
+        color,
+        cells: result.placed,
+      });
     }
 
     return NextResponse.json({ ok: true, placed: result.placed, credits: result.credits });

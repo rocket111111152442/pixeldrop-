@@ -21,6 +21,7 @@ export default function ChatPanel({
   onClose,
   onToast,
   onAchievements,
+  onOpenProfile,
 }: {
   me: string | null;
   guest: boolean;
@@ -28,6 +29,7 @@ export default function ChatPanel({
   onClose: () => void;
   onToast: (msg: string, type?: "error" | "success") => void;
   onAchievements?: (ids: string[]) => void;
+  onOpenProfile?: (pseudo: string) => void;
 }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
@@ -111,16 +113,22 @@ export default function ChatPanel({
         {messages.map((m) => (
           <div key={m.id} className="pd-chat-msg">
             <span className="pd-chat-meta">
-              <span
-                className={m.color === "rainbow" ? "pd-rainbow-text" : undefined}
-                style={{
-                  fontWeight: 700,
-                  color: m.color && m.color !== "rainbow" ? m.color : undefined,
-                }}
+              <button
+                onClick={() => onOpenProfile?.(m.pseudo)}
+                title="Voir le profil"
+                style={{ background: "none", border: "none", padding: 0, font: "inherit", cursor: "pointer" }}
               >
-                {m.badge && ITEM_LABELS[m.badge] ? ITEM_LABELS[m.badge].emoji + " " : ""}
-                {m.pseudo}
-              </span>
+                <span
+                  className={m.color === "rainbow" ? "pd-rainbow-text" : undefined}
+                  style={{
+                    fontWeight: 700,
+                    color: m.color && m.color !== "rainbow" ? m.color : undefined,
+                  }}
+                >
+                  {m.badge && ITEM_LABELS[m.badge] ? ITEM_LABELS[m.badge].emoji + " " : ""}
+                  {m.pseudo}
+                </span>
+              </button>
               {m.admin && <span title="Admin"> 👑</span>}
               <span className="pd-chat-lvl"> niv {m.level}</span>
             </span>

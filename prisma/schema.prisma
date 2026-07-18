@@ -186,3 +186,34 @@ model Setting {
   key   String @id
   value String
 }
+
+// Quêtes collectives : tout le monde y contribue, tout le monde est récompensé.
+// Entièrement paramétrable par l'administrateur.
+model Quest {
+  id          String @id @default(cuid())
+  title       String
+  description String @default("")
+  emoji       String @default("🎯")
+
+  // Objectif : voir GOAL_TYPES dans src/lib/quests.ts
+  goalType  String // place | place_color | place_area | bomb | effect
+  goalParam String? // couleur "#rrggbb", zone "x,y,w,h", effet "golden"…
+  target    Int
+  progress  Int    @default(0)
+
+  startAt DateTime @default(now())
+  endAt   DateTime
+
+  // Récompense distribuée à TOUS les joueurs si l'objectif est atteint à temps
+  rewardCredits Int    @default(0)
+  rewardXp      Int    @default(0)
+  rewardItems   String @default("") // "bomb:2,shield:1"
+
+  status        String    @default("active") // active | success | failed
+  distributedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}

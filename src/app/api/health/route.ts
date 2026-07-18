@@ -58,7 +58,7 @@ export async function GET() {
   if (env.DATABASE_URL && !database.ok) missing.push("Base injoignable (URL incorrecte ?)");
   if (database.ok && !database.tables)
     missing.push("Tables absentes — ouvre /api/setup une fois");
-  if (database.tables && database.schemaVersion !== "2")
+  if (database.tables && database.schemaVersion !== "3")
     missing.push("Schéma à mettre à niveau — ouvre /api/setup une fois");
 
   return NextResponse.json(

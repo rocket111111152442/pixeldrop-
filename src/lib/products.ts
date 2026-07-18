@@ -58,7 +58,7 @@ export const PRODUCTS: Product[] = [
   { sku: "nuke_3", kind: "item", category: "armes", label: "Dynamite ×3", description: "Lot de 3 · -20%", emoji: "🧨", amountCts: 1200, itemSku: "nuke", itemQty: 3 },
 
   // ── Défense ──
-  { sku: "shield_1", kind: "item", category: "defense", label: "Mousse protectrice ×1", description: "Protège 1 caillou des pioches", emoji: "🛡️", amountCts: 100, itemSku: "shield", itemQty: 1 },
+  { sku: "shield_1", kind: "item", category: "defense", label: "Mousse protectrice ×1", description: "Protège 1 caillou de la pioche (pas de la masse)", emoji: "🛡️", amountCts: 100, itemSku: "shield", itemQty: 1 },
   { sku: "shield_5", kind: "item", category: "defense", label: "Mousse protectrice ×5", description: "Lot de 5 · -20%", emoji: "🛡️", amountCts: 400, itemSku: "shield", itemQty: 5 },
   { sku: "shield_10", kind: "item", category: "defense", label: "Mousse protectrice ×10", description: "Lot de 10 · -30%", emoji: "🛡️", amountCts: 700, itemSku: "shield", itemQty: 10 },
 

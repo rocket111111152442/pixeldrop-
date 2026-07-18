@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isInsideGrid } from "@/lib/canvas-config";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { addXp, awardAchievements, levelAchievements, XP_BOMB } from "@/lib/game";
+import { bumpQuests } from "@/lib/quests";
 
 class BombError extends Error {
   constructor(public status: number, message: string) {
@@ -53,10 +54,15 @@ export async function POST(req: Request) {
         where: { OR: coords.map((c) => ({ x: c.x, y: c.y })) },
       });
 
-      // Détruisables : pixels d'autrui, non protégés (l'admin ignore ces règles).
-      const destroyable = targets.filter((p) =>
-        admin ? true : p.ownerId !== dbUser.id && !p.shielded,
-      );
+      // Détruisables : cailloux d'autrui. La mousse protectrice ne résiste
+      // qu'à la PIOCHE — la masse et la dynamite passent au travers.
+      // (L'admin ignore toutes ces règles.)
+      const destroyable = targets.filter((p) => {
+        if (admin) return true;
+        if (p.ownerId === dbUser.id) return false;
+        if (p.shielded && kindName === "bomb") return false;
+        return true;
+      });
 
       if (destroyable.length === 0) {
         throw new BombError(400, "Rien à détruire ici (vide, protégé, ou à toi).");
@@ -80,6 +86,9 @@ export async function POST(req: Request) {
 
       return destroyable.map((p) => ({ x: p.x, y: p.y }));
     });
+
+    // Quêtes collectives (best effort).
+    bumpQuests("bomb", { count: removed.length });
 
     let xpState = { xp: 0, level: 1, leveledUp: false };
     let newAchievements: string[] = [];

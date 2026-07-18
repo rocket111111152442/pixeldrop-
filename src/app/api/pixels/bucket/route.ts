@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isInsideGrid, isValidHexColor } from "@/lib/canvas-config";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { addXp } from "@/lib/game";
+import { bumpQuests } from "@/lib/quests";
 
 class BucketError extends Error {
   constructor(public status: number, message: string) {
@@ -88,6 +89,7 @@ export async function POST(req: Request) {
     } catch {
       /* best effort */
     }
+    bumpQuests("place", { count: placed.length, color, cells: placed });
 
     return NextResponse.json({ ok: true, placed, color });
   } catch (e) {

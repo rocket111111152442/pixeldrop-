@@ -5,6 +5,7 @@ import { isInsideGrid, isValidHexColor, GRID_WIDTH, GRID_HEIGHT } from "@/lib/ca
 import { cleanLink, cleanText } from "@/lib/security";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { addXp, awardAchievements, levelAchievements, XP_PLACE } from "@/lib/game";
+import { bumpQuests } from "@/lib/quests";
 
 class PlaceError extends Error {
   constructor(public status: number, message: string) {
@@ -123,6 +124,9 @@ export async function POST(req: Request) {
         totalPlaced: fresh?.totalPlaced ?? 0,
       };
     });
+
+    // Quêtes collectives (best effort).
+    bumpQuests("place", { count: 1, color, effect, cells: [{ x, y }] });
 
     // Progression (hors transaction — best effort).
     let xpState = { xp: 0, level: 1, leveledUp: false };

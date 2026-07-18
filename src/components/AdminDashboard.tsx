@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { ITEM_LABELS } from "@/lib/products";
+import AdminQuests from "@/components/AdminQuests";
 
 type AdminUser = {
   id: string;
@@ -190,6 +191,8 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
+
+          <AdminQuests onMsg={setMsg} />
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button

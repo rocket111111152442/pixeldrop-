@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 // puis crée le compte admin (uniquement si base vierge, ou si demandé par l'admin).
 // Rejouable sans danger : sert aussi de migration après une mise à jour du code.
 
-const SCHEMA_VERSION = "2";
+const SCHEMA_VERSION = "3";
 
 const DDL: string[] = [
   // ── Tables de base (v1) ──
@@ -81,6 +81,28 @@ const DDL: string[] = [
   `CREATE TABLE IF NOT EXISTS "Setting" (
     "key" TEXT NOT NULL, "value" TEXT NOT NULL,
     CONSTRAINT "Setting_pkey" PRIMARY KEY ("key"))`,
+
+  // ── v3 : quêtes collectives ──
+  `CREATE TABLE IF NOT EXISTS "Quest" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL DEFAULT '',
+    "emoji" TEXT NOT NULL DEFAULT '🎯',
+    "goalType" TEXT NOT NULL,
+    "goalParam" TEXT,
+    "target" INTEGER NOT NULL,
+    "progress" INTEGER NOT NULL DEFAULT 0,
+    "startAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endAt" TIMESTAMP(3) NOT NULL,
+    "rewardCredits" INTEGER NOT NULL DEFAULT 0,
+    "rewardXp" INTEGER NOT NULL DEFAULT 0,
+    "rewardItems" TEXT NOT NULL DEFAULT '',
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "distributedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Quest_pkey" PRIMARY KEY ("id"))`,
+  `CREATE INDEX IF NOT EXISTS "Quest_status_idx" ON "Quest"("status")`,
 
   // ── Index ──
   `CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email")`,

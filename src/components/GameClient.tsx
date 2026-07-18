@@ -11,6 +11,8 @@ import PixelCanvas, {
   type Focus,
 } from "@/components/PixelCanvas";
 import ChatPanel from "@/components/ChatPanel";
+import QuestsPanel from "@/components/QuestsPanel";
+import ProfileModal from "@/components/ProfileModal";
 import { LogoMark } from "@/components/Logo";
 import { PALETTE, GRID_WIDTH, GRID_HEIGHT } from "@/lib/canvas-config";
 import { ITEM_LABELS } from "@/lib/products";
@@ -137,6 +139,8 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   const [chatOpen, setChatOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [questsOpen, setQuestsOpen] = useState(false);
+  const [profileOf, setProfileOf] = useState<string | null>(null);
   const [minimapOn, setMinimapOn] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
   const [soundOn, setSoundOn] = useState(true);
@@ -1025,6 +1029,9 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
               <Link href="/boutique" className="pd-btn pd-btn-primary pd-hide-sm" style={{ textDecoration: "none" }}>
                 🛒
               </Link>
+              <button className="pd-btn" onClick={() => setQuestsOpen(true)} title="Quêtes collectives">
+                🎯
+              </button>
               <button className="pd-btn" onClick={() => setChatOpen((o) => !o)} title="Chat">
                 💬
               </button>
@@ -1034,6 +1041,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
             </>
           ) : (
             <>
+              <button className="pd-btn" onClick={() => setQuestsOpen(true)} title="Quêtes collectives">🎯</button>
               <button className="pd-btn" onClick={() => setChatOpen((o) => !o)} title="Chat">💬</button>
               <Link href="/login" className="pd-btn pd-hide-sm" style={{ textDecoration: "none" }}>
                 Se connecter
@@ -1305,13 +1313,23 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
               </div>
               <div>
                 Par{" "}
-                <strong
-                  className={info.ownerColor === "rainbow" ? "pd-rainbow-text" : undefined}
-                  style={{ color: info.ownerColor && info.ownerColor !== "rainbow" ? info.ownerColor : undefined }}
+                <button
+                  onClick={() => info.owner && info.owner !== "?" && setProfileOf(info.owner)}
+                  title="Voir le profil"
+                  style={{
+                    background: "none", border: "none", padding: 0, font: "inherit",
+                    fontWeight: 700, cursor: "pointer", textDecoration: "underline",
+                    textUnderlineOffset: 2,
+                  }}
                 >
-                  {info.ownerBadge && ITEM_LABELS[info.ownerBadge] ? ITEM_LABELS[info.ownerBadge].emoji + " " : ""}
-                  {info.owner}
-                </strong>{" "}
+                  <span
+                    className={info.ownerColor === "rainbow" ? "pd-rainbow-text" : undefined}
+                    style={{ color: info.ownerColor && info.ownerColor !== "rainbow" ? info.ownerColor : undefined }}
+                  >
+                    {info.ownerBadge && ITEM_LABELS[info.ownerBadge] ? ITEM_LABELS[info.ownerBadge].emoji + " " : ""}
+                    {info.owner}
+                  </span>
+                </button>{" "}
                 <span style={{ color: "var(--muted)", fontSize: 12 }}>
                   niv {info.ownerLevel}
                   {info.ownerTitle && ITEM_LABELS[info.ownerTitle] ? ` · ${ITEM_LABELS[info.ownerTitle].label}` : ""}
@@ -1367,8 +1385,15 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
           onClose={() => setChatOpen(false)}
           onToast={flash}
           onAchievements={(ids) => celebrate({ newAchievements: ids })}
+          onOpenProfile={(p) => setProfileOf(p)}
         />
       )}
+
+      {/* ── Quêtes collectives ── */}
+      {questsOpen && <QuestsPanel onClose={() => setQuestsOpen(false)} />}
+
+      {/* ── Fiche d'un joueur ── */}
+      {profileOf && <ProfileModal pseudo={profileOf} onClose={() => setProfileOf(null)} />}
 
       {/* ── Menu latéral ── */}
       {menuOpen && (
