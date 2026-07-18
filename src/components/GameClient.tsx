@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import PixelCanvas, {
   keyOf,
   type PixelMap,
+  type PixelInfo,
   type ViewInfo,
   type Focus,
 } from "@/components/PixelCanvas";
@@ -149,6 +150,28 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
   const paintedCountRef = useRef(0);
   const bumpRafRef = useRef<number | null>(null);
 
+  // ── Réconciliation optimiste ──
+  // Le serveur met parfois 1-2 s à publier une pose. Sans ça, le
+  // rafraîchissement périodique écraserait la carte et ferait « clignoter »
+  // les cailloux qu'on vient de poser. On garde donc les changements locaux
+  // jusqu'à ce que le serveur les confirme (ou 20 s max).
+  const PENDING_MS = 20_000;
+  const pendingAddRef = useRef<Map<number, { info: PixelInfo; until: number }>>(new Map());
+  const pendingDelRef = useRef<Map<number, number>>(new Map());
+
+  const markAdd = (key: number, info: PixelInfo) => {
+    pendingDelRef.current.delete(key);
+    pendingAddRef.current.set(key, { info, until: Date.now() + PENDING_MS });
+  };
+  const markDel = (key: number) => {
+    pendingAddRef.current.delete(key);
+    pendingDelRef.current.set(key, Date.now() + PENDING_MS);
+  };
+  const unmark = (key: number) => {
+    pendingAddRef.current.delete(key);
+    pendingDelRef.current.delete(key);
+  };
+
   const isAdmin = !!me?.isAdmin;
   const inv = useMemo(() => me?.inventory || {}, [me]);
 
@@ -215,6 +238,33 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
       for (const [x, y, c, e, i] of data.p as [number, number, string, number, number][]) {
         map.set(keyOf(x, y), { c, e: e || 0, i: !!i });
       }
+
+      // Réapplique les changements locaux que le serveur n'a pas encore publiés,
+      // sinon les cailloux fraîchement posés clignoteraient.
+      const now = Date.now();
+      pendingAddRef.current.forEach((entry, key) => {
+        if (now > entry.until) {
+          pendingAddRef.current.delete(key);
+          return;
+        }
+        if (map.has(key)) {
+          pendingAddRef.current.delete(key); // confirmé par le serveur
+          return;
+        }
+        map.set(key, entry.info);
+      });
+      pendingDelRef.current.forEach((until, key) => {
+        if (now > until) {
+          pendingDelRef.current.delete(key);
+          return;
+        }
+        if (!map.has(key)) {
+          pendingDelRef.current.delete(key); // suppression confirmée
+          return;
+        }
+        map.delete(key);
+      });
+
       pixelsRef.current = map;
       setCount(map.size);
       bump();
@@ -402,7 +452,9 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
       const eCode = snapEffect === "golden" ? 1 : snapEffect === "rainbow" ? 2 : snapEffect === "diamond" ? 3 : 0;
 
       // Affichage immédiat
-      pixelsRef.current.set(key, { c: snapColor, e: eCode, i: !!(snapLink || snapText) });
+      const optimistic: PixelInfo = { c: snapColor, e: eCode, i: !!(snapLink || snapText) };
+      pixelsRef.current.set(key, optimistic);
+      markAdd(key, optimistic);
       setCount(pixelsRef.current.size);
       bump();
       rememberColor(snapColor);
@@ -432,6 +484,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
             flash(data.error || "Impossible de poser ici.");
             sfx("error");
             pixelsRef.current.delete(key);
+            unmark(key);
             setCount(pixelsRef.current.size);
             bump();
             loadMe();
@@ -441,6 +494,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
           if (snapEffect || snapShield) loadMe();
         } catch {
           pixelsRef.current.delete(key);
+          unmark(key);
           setCount(pixelsRef.current.size);
           bump();
           loadMe();
@@ -473,7 +527,9 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
       paintSeenRef.current.add(key);
       paintBufRef.current.push({ x, y });
       paintedCountRef.current++;
-      pixelsRef.current.set(key, { c: color, e: 0, i: false });
+      const info: PixelInfo = { c: color, e: 0, i: false };
+      pixelsRef.current.set(key, info);
+      markAdd(key, info);
       scheduleBump();
     },
     [me, isAdmin, color, needAccount, scheduleBump],
@@ -497,7 +553,11 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
       const data = await r.json();
       if (!r.ok) {
         flash(data.error || "Pose impossible.");
-        for (const c of painted) pixelsRef.current.delete(keyOf(c.x, c.y));
+        for (const c of painted) {
+          const k = keyOf(c.x, c.y);
+          pixelsRef.current.delete(k);
+          unmark(k);
+        }
         setCount(pixelsRef.current.size);
         bump();
         loadMe();
@@ -507,7 +567,11 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         (data.placed as { x: number; y: number }[]).map((c) => keyOf(c.x, c.y)),
       );
       for (const c of painted) {
-        if (!placedSet.has(keyOf(c.x, c.y))) pixelsRef.current.delete(keyOf(c.x, c.y));
+        const k = keyOf(c.x, c.y);
+        if (!placedSet.has(k)) {
+          pixelsRef.current.delete(k);
+          unmark(k);
+        }
       }
       setCount(pixelsRef.current.size);
       bump();
@@ -541,7 +605,9 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
           return;
         }
         for (const c of data.removed as { x: number; y: number }[]) {
-          pixelsRef.current.delete(keyOf(c.x, c.y));
+          const k = keyOf(c.x, c.y);
+          pixelsRef.current.delete(k);
+          markDel(k);
         }
         setCount(pixelsRef.current.size);
         bump();
@@ -574,7 +640,10 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
           return;
         }
         for (const c of data.placed as { x: number; y: number }[]) {
-          pixelsRef.current.set(keyOf(c.x, c.y), { c: color, e: 0, i: false });
+          const k = keyOf(c.x, c.y);
+          const info: PixelInfo = { c: color, e: 0, i: false };
+          pixelsRef.current.set(k, info);
+          markAdd(k, info);
         }
         setCount(pixelsRef.current.size);
         bump();
@@ -606,7 +675,9 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
           return;
         }
         const prev = pixelsRef.current.get(keyOf(x, y));
-        pixelsRef.current.set(keyOf(x, y), { c: color, e: prev?.e ?? 0, i: prev?.i ?? false });
+        const info: PixelInfo = { c: color, e: prev?.e ?? 0, i: prev?.i ?? false };
+        pixelsRef.current.set(keyOf(x, y), info);
+        markAdd(keyOf(x, y), info);
         bump();
         loadMe();
         flash("🎭 Caillou poli !", "success");
@@ -635,6 +706,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
           return;
         }
         pixelsRef.current.delete(keyOf(x, y));
+        markDel(keyOf(x, y));
         setCount(pixelsRef.current.size);
         bump();
         loadMe();
@@ -672,9 +744,14 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
           if (r.status !== 409) setMoveFrom(null);
           return;
         }
-        const src = pixelsRef.current.get(keyOf(moveFrom.x, moveFrom.y));
-        pixelsRef.current.delete(keyOf(moveFrom.x, moveFrom.y));
-        pixelsRef.current.set(keyOf(x, y), src ?? { c: data.pixel.color, e: 0, i: false });
+        const fromKey = keyOf(moveFrom.x, moveFrom.y);
+        const toKey = keyOf(x, y);
+        const src = pixelsRef.current.get(fromKey);
+        const info: PixelInfo = src ?? { c: data.pixel.color, e: 0, i: false };
+        pixelsRef.current.delete(fromKey);
+        markDel(fromKey);
+        pixelsRef.current.set(toKey, info);
+        markAdd(toKey, info);
         bump();
         setMoveFrom(null);
         loadMe();
