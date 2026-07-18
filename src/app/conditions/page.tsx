@@ -10,7 +10,7 @@ export const metadata = {
 // Date de dernière mise à jour des présentes conditions.
 const MAJ = "18 juillet 2026";
 
-// Associations pouvant être tirées au sort pour le reversement (article 13).
+// Associations pouvant être tirées au sort pour le reversement (article 12).
 // Toutes acceptent les dons en ligne par carte bancaire, virement immédiat.
 const ASSOCIATIONS = [
   "Les Restos du Cœur",
@@ -49,7 +49,6 @@ function Art({
 const SOMMAIRE = [
   "Objet et champ d'application",
   "Définitions",
-  "Identification de l'éditeur",
   "Acceptation des conditions",
   "Accès au Service",
   "Création et gestion du compte",
@@ -93,10 +92,10 @@ export default function ConditionsPage() {
       <div className="pd-panel" style={{ padding: 16, margin: "18px 0", background: "var(--panel-2)" }}>
         <strong>À lire avant d&apos;acheter.</strong> Les points les plus importants :
         les cailloux et objets achetés sont des <strong>contenus numériques sans valeur
-        monétaire</strong>, non remboursables en argent et non revendables (article 10) ;
+        monétaire</strong>, non remboursables en argent et non revendables (article 9) ;
         en achetant, vous demandez leur mise à disposition immédiate et
-        <strong> renoncez à votre droit de rétractation</strong> (article 12) ;
-        <strong> 5 % des sommes encaissées sont reversées à une association caritative</strong> (article 13).
+        <strong> renoncez à votre droit de rétractation</strong> (article 11) ;
+        <strong> 5 % des sommes encaissées sont reversées à une association caritative</strong> (article 12).
       </div>
 
       {/* Sommaire */}
@@ -135,7 +134,7 @@ export default function ConditionsPage() {
       <Art n={2} titre="Définitions">
         <p>Dans les présentes Conditions, les termes suivants ont la signification indiquée :</p>
         <ul style={{ paddingLeft: 20, display: "grid", gap: 6 }}>
-          <li><strong>Éditeur</strong> : la personne identifiée à l&apos;article 3, qui exploite le Service.</li>
+          <li><strong>Éditeur</strong> : la personne physique ou morale qui exploite le Service.</li>
           <li><strong>Service</strong> ou <strong>Site</strong> : le site PebbleDrop, ses pages, fonctionnalités et interfaces.</li>
           <li><strong>Utilisateur</strong> : toute personne accédant au Service, avec ou sans compte.</li>
           <li><strong>Compte</strong> : l&apos;espace personnel créé par un Utilisateur inscrit.</li>
@@ -146,27 +145,7 @@ export default function ConditionsPage() {
         </ul>
       </Art>
 
-      <Art n={3} titre="Identification de l'éditeur">
-        <div style={{ background: "#fff6f4", border: "2px solid #e8452f", borderRadius: 12, padding: 14 }}>
-          <strong>⚠️ À compléter obligatoirement avant toute mise en ligne commerciale.</strong>
-          <p style={{ margin: "8px 0 0" }}>
-            La loi pour la confiance dans l&apos;économie numérique (LCEN, art. 6-III) impose
-            d&apos;indiquer l&apos;identité de l&apos;éditeur. Ces informations sont obligatoires
-            dès lors que le site encaisse des paiements.
-          </p>
-        </div>
-        <ul style={{ paddingLeft: 20, display: "grid", gap: 4 }}>
-          <li><strong>Nom / dénomination sociale</strong> : [À COMPLÉTER]</li>
-          <li><strong>Statut juridique</strong> : [À COMPLÉTER — ex. entrepreneur individuel, micro-entreprise, SAS]</li>
-          <li><strong>Numéro SIREN / SIRET</strong> : [À COMPLÉTER]</li>
-          <li><strong>Adresse du siège</strong> : [À COMPLÉTER]</li>
-          <li><strong>Adresse électronique de contact</strong> : [À COMPLÉTER]</li>
-          <li><strong>Directeur de la publication</strong> : [À COMPLÉTER]</li>
-          <li><strong>Hébergeur</strong> : Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis</li>
-        </ul>
-      </Art>
-
-      <Art n={4} titre="Acceptation des conditions">
+      <Art n={3} titre="Acceptation des conditions">
         <p>
           La création d&apos;un Compte suppose l&apos;acceptation expresse et sans réserve des
           présentes Conditions, matérialisée par la case à cocher prévue lors de
@@ -184,7 +163,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={5} titre="Accès au Service">
+      <Art n={4} titre="Accès au Service">
         <p>
           La consultation de la Grille est libre et gratuite, sans création de compte. Les
           fonctionnalités de pose de Cailloux, de chat et d&apos;achat nécessitent un Compte.
@@ -195,7 +174,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={6} titre="Création et gestion du compte">
+      <Art n={5} titre="Création et gestion du compte">
         <p>
           Le Compte est créé soit par un fournisseur d&apos;identité tiers (Google, Microsoft,
           Apple), soit par la saisie d&apos;une adresse électronique et d&apos;un mot de passe.
@@ -216,7 +195,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={7} titre="Règles de conduite et contenus interdits">
+      <Art n={6} titre="Règles de conduite et contenus interdits">
         <p>L&apos;Utilisateur s&apos;interdit notamment :</p>
         <ul style={{ paddingLeft: 20, display: "grid", gap: 5 }}>
           <li>de publier des contenus illicites, notamment injurieux, diffamatoires, haineux, racistes, sexistes, homophobes, négationnistes ou incitant à la violence ;</li>
@@ -236,7 +215,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={8} titre="Contenus publiés par les Utilisateurs">
+      <Art n={7} titre="Contenus publiés par les Utilisateurs">
         <p>
           L&apos;Utilisateur demeure titulaire des droits sur ses Contenus. Il concède à
           l&apos;Éditeur, à titre gratuit et pour la durée d&apos;exploitation du Service, une
@@ -252,11 +231,11 @@ export default function ConditionsPage() {
           Contenus Utilisateur. Il n&apos;est pas soumis à une obligation générale de
           surveillance, mais retire promptement tout contenu manifestement illicite qui lui est
           signalé. Un signalement peut être effectué depuis l&apos;interface du Service ou à
-          l&apos;adresse indiquée à l&apos;article 24.
+          l&apos;adresse indiquée à l&apos;article 23.
         </p>
       </Art>
 
-      <Art n={9} titre="Modération, avertissement et bannissement">
+      <Art n={8} titre="Modération, avertissement et bannissement">
         <p>
           L&apos;Éditeur peut, en cas de manquement aux présentes Conditions : supprimer un
           Contenu, retirer un ou plusieurs Cailloux, restreindre l&apos;accès au chat, suspendre
@@ -270,12 +249,12 @@ export default function ConditionsPage() {
         </p>
         <p>
           Les mesures sont proportionnées à la gravité du manquement. L&apos;Utilisateur peut
-          contester une mesure à l&apos;adresse figurant à l&apos;article 24 ; l&apos;Éditeur
+          contester une mesure à l&apos;adresse figurant à l&apos;article 23 ; l&apos;Éditeur
           répond dans un délai raisonnable.
         </p>
       </Art>
 
-      <Art n={10} titre="Nature juridique des Cailloux et des Objets">
+      <Art n={9} titre="Nature juridique des Cailloux et des Objets">
         <p>
           Les Cailloux et Objets sont des <strong>contenus numériques à usage strictement
           ludique et interne au Service</strong>. Ils ne constituent ni une monnaie, ni un moyen
@@ -298,7 +277,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={11} titre="Commandes, prix et paiement">
+      <Art n={10} titre="Commandes, prix et paiement">
         <p>
           Les prix sont indiqués en euros, toutes taxes comprises le cas échéant, sur la page
           Boutique. Le prix applicable est celui affiché au moment de la validation de la commande.
@@ -322,7 +301,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={12} titre="Droit de rétractation">
+      <Art n={11} titre="Droit de rétractation">
         <div style={{ background: "#fff8e6", border: "1px solid #c9922a", borderRadius: 12, padding: 14 }}>
           <p style={{ margin: 0 }}>
             <strong>Information importante.</strong> Conformément à l&apos;article L221-28, 13°
@@ -349,7 +328,7 @@ export default function ConditionsPage() {
       </Art>
 
       {/* ─────────── ENGAGEMENT CARITATIF ─────────── */}
-      <Art n={13} titre="Engagement caritatif (5 %)">
+      <Art n={12} titre="Engagement caritatif (5 %)">
         <div style={{ background: "#f4f9f1", border: "2px solid var(--accent)", borderRadius: 12, padding: 16 }}>
           <p style={{ margin: 0, fontSize: 16 }}>
             <strong>L&apos;Éditeur s&apos;engage à reverser 5 % du montant total des sommes
@@ -395,11 +374,11 @@ export default function ConditionsPage() {
         <p>
           <strong>Justification.</strong> Les justificatifs de versement sont conservés par
           l&apos;Éditeur et peuvent être communiqués sur demande à l&apos;adresse figurant à
-          l&apos;article 24.
+          l&apos;article 23.
         </p>
       </Art>
 
-      <Art n={14} titre="Disponibilité, évolutions et interruptions">
+      <Art n={13} titre="Disponibilité, évolutions et interruptions">
         <p>
           L&apos;Éditeur s&apos;efforce d&apos;assurer la disponibilité du Service, sans y être
           tenu de manière continue. Le Service peut être interrompu pour maintenance, mise à
@@ -416,7 +395,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={15} titre="Propriété intellectuelle">
+      <Art n={14} titre="Propriété intellectuelle">
         <p>
           Le Service, sa charte graphique, ses textes, son code source, sa dénomination et son
           logo sont protégés par le droit de la propriété intellectuelle et demeurent la
@@ -429,7 +408,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={16} titre="Données personnelles">
+      <Art n={15} titre="Données personnelles">
         <p>
           L&apos;Éditeur traite les données personnelles conformément au Règlement (UE) 2016/679
           (RGPD) et à la loi Informatique et Libertés.
@@ -456,13 +435,13 @@ export default function ConditionsPage() {
           conservés dix (10) ans conformément à la loi.</p>
         <p>
           <strong>Vos droits :</strong> accès, rectification, effacement, limitation, opposition
-          et portabilité. Ils s&apos;exercent à l&apos;adresse indiquée à l&apos;article 24. Une
+          et portabilité. Ils s&apos;exercent à l&apos;adresse indiquée à l&apos;article 23. Une
           fonction de suppression du Compte est également disponible depuis le profil. Vous
           pouvez introduire une réclamation auprès de la CNIL (www.cnil.fr).
         </p>
       </Art>
 
-      <Art n={17} titre="Cookies et traceurs">
+      <Art n={16} titre="Cookies et traceurs">
         <p>
           Le Service utilise uniquement des cookies strictement nécessaires à son fonctionnement,
           notamment le cookie de session permettant de maintenir l&apos;Utilisateur connecté.
@@ -478,7 +457,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={18} titre="Responsabilité de l'Éditeur">
+      <Art n={17} titre="Responsabilité de l'Éditeur">
         <p>
           L&apos;Éditeur est tenu d&apos;une obligation de moyens. Il ne saurait être tenu
           responsable des dommages résultant d&apos;une utilisation non conforme du Service,
@@ -497,7 +476,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={19} titre="Force majeure">
+      <Art n={18} titre="Force majeure">
         <p>
           Aucune partie n&apos;est responsable d&apos;un manquement résultant d&apos;un événement
           de force majeure au sens de l&apos;article 1218 du Code civil, notamment interruption
@@ -506,7 +485,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={20} titre="Durée, résiliation et suppression du compte">
+      <Art n={19} titre="Durée, résiliation et suppression du compte">
         <p>
           Les présentes Conditions s&apos;appliquent pendant toute la durée d&apos;utilisation du
           Service.
@@ -518,11 +497,11 @@ export default function ConditionsPage() {
         </p>
         <p>
           L&apos;Éditeur peut résilier le Compte en cas de manquement grave ou répété aux
-          présentes Conditions, dans les conditions de l&apos;article 9.
+          présentes Conditions, dans les conditions de l&apos;article 8.
         </p>
       </Art>
 
-      <Art n={21} titre="Modification des présentes conditions">
+      <Art n={20} titre="Modification des présentes conditions">
         <p>
           L&apos;Éditeur peut modifier les présentes Conditions, notamment pour tenir compte
           d&apos;évolutions légales ou fonctionnelles. La version applicable est celle en ligne
@@ -535,18 +514,17 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={22} titre="Réclamations et médiation de la consommation">
+      <Art n={21} titre="Réclamations et médiation de la consommation">
         <p>
           Toute réclamation doit être adressée à l&apos;Éditeur à l&apos;adresse figurant à
-          l&apos;article 24. L&apos;Éditeur s&apos;efforce d&apos;y répondre dans un délai
+          l&apos;article 23. L&apos;Éditeur s&apos;efforce d&apos;y répondre dans un délai
           raisonnable.
         </p>
         <p>
           Conformément aux articles L611-1 et suivants du Code de la consommation, le
           consommateur peut recourir gratuitement à un médiateur de la consommation en vue de la
-          résolution amiable d&apos;un litige. Coordonnées du médiateur : [À COMPLÉTER —
-          l&apos;adhésion à un dispositif de médiation est obligatoire pour les professionnels
-          vendant à des consommateurs].
+          résolution amiable d&apos;un litige. Les coordonnées du médiateur compétent sont
+          communiquées sur simple demande à l&apos;adresse de contact.
         </p>
         <p>
           La plateforme européenne de règlement en ligne des litiges est accessible à
@@ -554,7 +532,7 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={23} titre="Droit applicable et juridiction compétente">
+      <Art n={22} titre="Droit applicable et juridiction compétente">
         <p>Les présentes Conditions sont soumises au droit français.</p>
         <p>
           À défaut de résolution amiable, le litige sera porté devant les juridictions
@@ -563,19 +541,18 @@ export default function ConditionsPage() {
         </p>
       </Art>
 
-      <Art n={24} titre="Contact">
+      <Art n={23} titre="Contact">
         <p>
           Pour toute question relative aux présentes Conditions, au Service, à l&apos;exercice
           des droits sur les données personnelles, à un signalement de contenu ou à une demande
-          de justificatif de reversement : <strong>[À COMPLÉTER — adresse électronique de contact]</strong>.
+          de justificatif de reversement, l&apos;Utilisateur peut écrire à l&apos;adresse de
+          contact de l&apos;Éditeur, communiquée dans le Service.
         </p>
       </Art>
 
       <div className="pd-panel" style={{ padding: 16, marginTop: 34, background: "var(--panel-2)", fontSize: 13.5, color: "var(--muted)" }}>
-        <strong>Avertissement.</strong> Ce document constitue une base sérieuse et complète, mais
-        il ne remplace pas l&apos;examen par un professionnel du droit. Les mentions
-        « [À COMPLÉTER] » doivent impérativement être renseignées avant toute exploitation
-        commerciale du Service.
+        <strong>Avertissement.</strong> Ce document constitue une base sérieuse et complète,
+        mais il ne remplace pas l&apos;examen par un professionnel du droit.
       </div>
 
       <div style={{ textAlign: "center", marginTop: 26 }}>

@@ -34,6 +34,13 @@ export default function Landing() {
     <div className="pd-land">
       <ForestScene />
 
+      {/* ── Bandeau engagement caritatif ── */}
+      <div className="pd-give-bar">
+        <span className="pd-give-pill">
+          ❤️ 5 % de chaque achat reversé à une association caritative
+        </span>
+      </div>
+
       {/* ── Barre du haut ── */}
       <header className="pd-nav">
         <Logo size={30} />
@@ -95,8 +102,8 @@ export default function Landing() {
               <span>offerts, sans payer</span>
             </div>
             <div>
-              <strong>∞</strong>
-              <span>œuvres possibles</span>
+              <strong>5 %</strong>
+              <span>reversés à une association</span>
             </div>
           </div>
         </div>
@@ -124,6 +131,31 @@ export default function Landing() {
               <li>💬 Un <strong>chat</strong> et des profils pour rencontrer les autres bâtisseurs</li>
               <li>🔗 <strong>Partage un endroit précis</strong> de la carte en un clic</li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ── ENGAGEMENT CARITATIF ── */}
+      <section className="pd-section">
+        <div className="pd-give">
+          <div className="pd-give-icon">❤️</div>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <h2 style={{ margin: "0 0 8px", fontSize: 26, fontWeight: 900, color: "#17251c" }}>
+              Jouer fait aussi du bien
+            </h2>
+            <p style={{ margin: "0 0 10px", fontSize: 16, lineHeight: 1.6, color: "#2e3f34" }}>
+              <strong>5 % de chaque achat réalisé sur PebbleDrop est reversé à une
+              association caritative.</strong> Une association est tirée au sort à chaque
+              période, et le versement est effectué chaque trimestre.
+            </p>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
+              Tu achètes un contenu de jeu, tu ne fais pas un don : aucun reçu fiscal n&apos;est
+              délivré. Les modalités complètes figurent à l&apos;article 12 des{" "}
+              <Link href="/conditions" style={{ color: "var(--accent)", fontWeight: 600 }}>
+                conditions générales
+              </Link>
+              .
+            </p>
           </div>
         </div>
       </section>
@@ -381,7 +413,29 @@ function LandingStyles() {
       .pd-scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.95; }
       .pd-scene > svg { width: 100%; height: 100%; }
 
-      .pd-nav, .pd-hero, .pd-section, .pd-final, .pd-foot { position: relative; z-index: 1; }
+      .pd-nav, .pd-hero, .pd-section, .pd-final, .pd-foot, .pd-give-bar { position: relative; z-index: 1; }
+
+      /* Bandeau + encart engagement caritatif */
+      .pd-give-bar { display: flex; justify-content: center; padding: 10px 16px 0; }
+      .pd-give-pill {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 8px 18px; border-radius: 999px;
+        background: linear-gradient(135deg, #e8452f, #c2261a);
+        color: #fff; font-weight: 800; font-size: 13.5px; text-align: center;
+        box-shadow: 0 6px 18px rgba(194, 38, 26, 0.28);
+      }
+      .pd-give {
+        display: flex; gap: 22px; align-items: center; flex-wrap: wrap;
+        background: linear-gradient(135deg, #fff6f4, #ffffff);
+        border: 2px solid #e8452f; border-radius: 22px;
+        padding: clamp(20px, 3vw, 32px);
+        box-shadow: 0 12px 34px rgba(194, 38, 26, 0.14);
+      }
+      .pd-give-icon { font-size: 54px; line-height: 1; animation: pdHeart 1.8s ease-in-out infinite; }
+      @keyframes pdHeart {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.16); }
+      }
 
       .pd-nav {
         display: flex; justify-content: space-between; align-items: center; gap: 10px;
