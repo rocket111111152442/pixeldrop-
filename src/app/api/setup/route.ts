@@ -226,7 +226,7 @@ async function handle(req: Request) {
       const email = (process.env.ADMIN_EMAIL || "admin@pixeldrop.app").toLowerCase();
       const password = process.env.ADMIN_PASSWORD;
       const pseudoBase = process.env.ADMIN_PSEUDO || "Admin";
-      if (!password || password.length < 12) {
+      if (!password || password.length < 8) {
         admin = "ignoré: ADMIN_PASSWORD manquant ou trop court";
         return NextResponse.json({
           ok: errors.length === 0,

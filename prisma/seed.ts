@@ -10,8 +10,8 @@ async function main() {
   const email = (process.env.ADMIN_EMAIL || "admin@pixeldrop.app").toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   const pseudo = process.env.ADMIN_PSEUDO || "Admin";
-  if (!password || password.length < 12) {
-    console.log("Admin ignoré : ADMIN_PASSWORD manquant ou trop court (12 caractères minimum).");
+  if (!password || password.length < 8) {
+    console.log("Admin ignoré : ADMIN_PASSWORD manquant ou trop court (8 caractères minimum).");
     return;
   }
   const hashedPassword = await bcrypt.hash(password, 10);

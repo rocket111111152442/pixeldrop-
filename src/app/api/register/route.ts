@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { FREE_PIXELS } from "@/lib/canvas-config";
-import { cleanEmail, cleanPseudo } from "@/lib/security";
+import { cleanEmail, cleanPseudo, redactError } from "@/lib/security";
 import { rateLimit, ipOf, tooMany } from "@/lib/rate-limit";
 import { isMailConfigured } from "@/lib/mailer";
 import {
@@ -63,7 +63,15 @@ export async function POST(req: Request) {
     if (!existingEmail.emailVerified && existingEmail.hashedPassword) {
       const ok = await bcrypt.compare(password, existingEmail.hashedPassword);
       if (ok) {
-        await createAndSendEmailCode(email, "register");
+        try {
+          await createAndSendEmailCode(email, "register");
+        } catch (e) {
+          console.error("register resend failed", redactError(e));
+          return NextResponse.json(
+            { error: "Impossible d'envoyer le code de vérification pour le moment." },
+            { status: 503 },
+          );
+        }
         return NextResponse.json({
           ok: true,
           verificationRequired: true,
@@ -116,7 +124,15 @@ export async function POST(req: Request) {
     }
   });
 
-  await createAndSendEmailCode(email, "register");
+  try {
+    await createAndSendEmailCode(email, "register");
+  } catch (e) {
+    console.error("register send failed", redactError(e));
+    return NextResponse.json(
+      { error: "Impossible d'envoyer le code de vérification pour le moment." },
+      { status: 503 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,

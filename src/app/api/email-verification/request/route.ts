@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { cleanEmail } from "@/lib/security";
+import { cleanEmail, redactError } from "@/lib/security";
 import { isMailConfigured } from "@/lib/mailer";
 import {
   createAndSendEmailCode,
@@ -9,6 +9,7 @@ import {
   type EmailVerificationPurpose,
 } from "@/lib/email-verification";
 import { ipOf, rateLimit, tooMany } from "@/lib/rate-limit";
+import { ensureConfiguredAdminUser } from "@/lib/admin-recovery";
 
 export const runtime = "nodejs";
 
@@ -40,14 +41,19 @@ export async function POST(req: Request) {
     );
   }
 
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { email },
-    select: { hashedPassword: true, emailVerified: true },
   });
+  if (!user?.hashedPassword) {
+    user = await ensureConfiguredAdminUser(email, password);
+  }
   if (!user?.hashedPassword) return invalidCredentials();
 
   const ok = await bcrypt.compare(password, user.hashedPassword);
-  if (!ok) return invalidCredentials();
+  if (!ok) {
+    user = await ensureConfiguredAdminUser(email, password);
+    if (!user?.hashedPassword) return invalidCredentials();
+  }
 
   if (purpose === "register" && user.emailVerified) {
     return NextResponse.json(
@@ -56,7 +62,15 @@ export async function POST(req: Request) {
     );
   }
 
-  await createAndSendEmailCode(email, purpose);
+  try {
+    await createAndSendEmailCode(email, purpose);
+  } catch (e) {
+    console.error("email-verification send failed", redactError(e));
+    return NextResponse.json(
+      { error: "Impossible d'envoyer le code de vérification pour le moment." },
+      { status: 503 },
+    );
+  }
   return NextResponse.json({
     ok: true,
     verificationRequired: true,
