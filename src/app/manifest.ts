@@ -3,10 +3,10 @@ import type { MetadataRoute } from "next";
 // PWA : PebbleDrop installable sur l'écran d'accueil (mobile + desktop).
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "PebbleDrop — Pose ton caillou, nourris un cœur",
+    name: "PebbleDrop — Pose ton caillou, laisse ta trace",
     short_name: "PebbleDrop",
     description:
-      "1 000 000 de cailloux à poser. 10 offerts. 100 % des recettes reversées aux Restos du Cœur.",
+      "1 000 000 de cailloux à poser sur une clairière partagée. 10 offerts, jeu gratuit.",
     start_url: "/",
     display: "standalone",
     orientation: "any",

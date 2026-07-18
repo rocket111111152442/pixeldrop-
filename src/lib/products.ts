@@ -1,6 +1,5 @@
 // Catalogue des articles achetables via Stripe.
 // Prix en centimes d'euro. Prix de base du caillou : 10 cts, dégressif sur les gros sacs.
-// ❤️ 100 % des recettes sont reversées aux Restos du Cœur.
 //
 // ⚠️ Les `sku` et `itemSku` sont stockés en base : ne JAMAIS les renommer
 // (seuls les libellés visibles peuvent changer).

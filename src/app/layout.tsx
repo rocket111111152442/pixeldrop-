@@ -9,11 +9,11 @@ const SITE_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "PebbleDrop — Pose ton caillou, nourris un cœur",
+    default: "PebbleDrop — Pose ton caillou, laisse ta trace",
     template: "%s · PebbleDrop",
   },
   description:
-    "PebbleDrop : pose des cailloux sur une clairière géante d'un million de cases. 10 cailloux offerts. 100 % des recettes reversées aux Restos du Cœur.",
+    "PebbleDrop : pose des cailloux sur une clairière géante d'un million de cases et construis une œuvre collective. 10 cailloux offerts, jeu gratuit.",
   applicationName: "PebbleDrop",
   keywords: [
     "PebbleDrop",
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
     "clairière",
     "pixel war",
     "r/place",
-    "Restos du Cœur",
-    "don",
-    "caritatif",
+    "oeuvre collective",
+    "jeu gratuit",
+    "dessin collaboratif",
   ],
   authors: [{ name: "PebbleDrop" }],
   alternates: { canonical: "/" },
@@ -34,16 +34,16 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "PebbleDrop",
     url: SITE_URL,
-    title: "PebbleDrop — Pose ton caillou, nourris un cœur",
+    title: "PebbleDrop — Pose ton caillou, laisse ta trace",
     description:
-      "Pose des cailloux sur une clairière géante. 100 % des recettes reversées aux Restos du Cœur.",
+      "Pose des cailloux sur une clairière géante et construis une œuvre collective. 10 cailloux offerts.",
     locale: "fr_FR",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PebbleDrop — Pose ton caillou, nourris un cœur",
+    title: "PebbleDrop — Pose ton caillou, laisse ta trace",
     description:
-      "Pose des cailloux sur une clairière géante. 100 % des recettes reversées aux Restos du Cœur.",
+      "Pose des cailloux sur une clairière géante et construis une œuvre collective. 10 cailloux offerts.",
   },
   robots: {
     index: true,

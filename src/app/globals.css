@@ -215,20 +215,6 @@ canvas.pd-canvas {
 }
 @keyframes pdRainbow { to { background-position: 300% center; } }
 
-/* ── Bandeau Restos du Cœur ── */
-.pd-charity {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #e8452f, #c2261a);
-  color: #fff;
-  font-weight: 800;
-  font-size: 13.5px;
-  box-shadow: 0 6px 18px rgba(194, 38, 26, 0.28);
-}
-
 /* ── Barre supérieure ── */
 .pd-topbar {
   position: fixed;

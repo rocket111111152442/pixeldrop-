@@ -50,24 +50,19 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* ── Bandeau caritatif ── */}
-      <div className="pd-charity-bar">
-        <span className="pd-charity">❤️ 100 % des recettes reversées aux Restos du Cœur</span>
-      </div>
-
       {/* ── HERO ── */}
       <section className="pd-hero">
         <div className="pd-hero-left">
-          <div className="pd-badge">🎁 10 cailloux offerts à l'inscription</div>
+          <div className="pd-badge">🎁 10 cailloux offerts à l&apos;inscription</div>
           <h1 className="pd-title">
             Un million de cailloux.
             <br />
-            <span className="pd-grad">Pose le tien dans la clairière.</span>
+            <span className="pd-grad">Laisse ta trace dans la clairière.</span>
           </h1>
           <p className="pd-sub">
-            Choisis un caillou, du plus clair au plus sombre, et pose-le sur une
-            immense clairière partagée. Grave un message ou un lien sous ta pierre,
-            construis ton cairn, défends ton coin de forêt.
+            Une immense clairière partagée que tout le monde construit ensemble,
+            caillou par caillou. Choisis ta pierre, pose-la, grave un message ou
+            un lien dessous — et regarde l&apos;œuvre collective grandir en direct.
           </p>
 
           {/* Nuancier de cailloux */}
@@ -97,11 +92,11 @@ export default function Landing() {
             </div>
             <div>
               <strong>10</strong>
-              <span>cailloux offerts</span>
+              <span>offerts, sans payer</span>
             </div>
             <div>
-              <strong>100 %</strong>
-              <span>reversés aux Restos</span>
+              <strong>∞</strong>
+              <span>œuvres possibles</span>
             </div>
           </div>
         </div>
@@ -111,28 +106,24 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── LES RESTOS DU CŒUR : le cœur du projet ── */}
+      {/* ── L'ŒUVRE COLLECTIVE : l'argument central ── */}
       <section className="pd-section">
-        <div className="pd-donation">
-          <div className="pd-donation-icon">❤️</div>
+        <div className="pd-highlight">
+          <div className="pd-highlight-icon">🗿</div>
           <div style={{ flex: 1, minWidth: 260 }}>
             <h2 style={{ margin: "0 0 8px", fontSize: 26, fontWeight: 900 }}>
-              Chaque caillou acheté devient un repas
+              Une œuvre que personne ne peut faire seul
             </h2>
             <p style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.6 }}>
-              PebbleDrop ne garde <strong>rien</strong>. <strong>L'intégralité des recettes
-              est reversée aux Restos du Cœur</strong> — l'association qui distribue des
-              repas et accompagne les personnes en difficulté partout en France.
+              Chaque caillou posé reste. Le tien devient une pièce d&apos;une fresque
+              construite par tous les joueurs, en direct. Personne ne peut
+              l&apos;effacer : <strong>ce que tu poses t&apos;appartient pour de bon</strong>.
             </p>
-            <ul className="pd-donation-list">
-              <li>🪨 Tu poses des cailloux et tu t'amuses</li>
-              <li>❤️ Ton argent part aux Restos du Cœur</li>
-              <li>🍽️ Des repas sont servis à ceux qui en ont besoin</li>
+            <ul className="pd-highlight-list">
+              <li>🎯 Des <strong>quêtes collectives</strong> : un objectif commun, une récompense pour tout le monde</li>
+              <li>💬 Un <strong>chat</strong> et des profils pour rencontrer les autres bâtisseurs</li>
+              <li>🔗 <strong>Partage un endroit précis</strong> de la carte en un clic</li>
             </ul>
-            <p style={{ margin: "12px 0 0", fontSize: 12.5, color: "var(--muted)" }}>
-              PebbleDrop est un projet indépendant, non affilié aux Restos du Cœur, qui
-              leur reverse ses recettes.
-            </p>
           </div>
         </div>
       </section>
@@ -140,7 +131,7 @@ export default function Landing() {
       {/* ── FEATURES ── */}
       <section className="pd-section">
         <h2 className="pd-h2">Pourquoi tu vas adorer</h2>
-        <p className="pd-h2-sub">Une clairière géante, des cailloux, et une bonne cause.</p>
+        <p className="pd-h2-sub">Simple à prendre en main, difficile à lâcher.</p>
         <div className="pd-cards">
           <Feature emoji="🪨" title="Des cailloux, du clair au sombre">
             Plus de 30 nuances minérales : calcaire, grès, ardoise, granit, mousse et
@@ -159,8 +150,8 @@ export default function Landing() {
             dynamite (5×5) pour reprendre du terrain.
           </Feature>
           <Feature emoji="🛡️" title="Cailloux protégés">
-            Protège tes plus belles pierres : un caillou sous mousse résiste aux
-            pioches.
+            Protège tes plus belles pierres : la mousse résiste aux pioches
+            (mais pas à la masse…).
           </Feature>
           <Feature emoji="💎" title="Pierres précieuses">
             Pépites dorées, opales chatoyantes et diamants bruts : des cailloux
@@ -171,7 +162,7 @@ export default function Landing() {
 
       {/* ── ÉTAPES ── */}
       <section className="pd-section" id="comment">
-        <h2 className="pd-h2">3 étapes, c'est parti</h2>
+        <h2 className="pd-h2">3 étapes, c&apos;est parti</h2>
         <div className="pd-steps">
           <Step n={1} title="Crée ton compte">
             Inscription en 10 secondes (Google ou email). Tu reçois <strong>10 cailloux
@@ -182,8 +173,8 @@ export default function Landing() {
             message ou un lien si tu veux.
           </Step>
           <Step n={3} title="Agrandis ton cairn">
-            À court de cailloux ? Prends un sac — et <strong>100 % de ton argent part
-            aux Restos du Cœur</strong>.
+            Reviens chaque jour pour ta récompense, invite un ami (+5 cailloux pour
+            vous deux) ou prends un sac.
           </Step>
         </div>
         <div style={{ textAlign: "center", marginTop: 26 }}>
@@ -195,7 +186,7 @@ export default function Landing() {
 
       {/* ── OUTILS ── */}
       <section className="pd-section">
-        <h2 className="pd-h2">L'équipement du carrier</h2>
+        <h2 className="pd-h2">L&apos;équipement du carrier</h2>
         <div className="pd-cards pd-cards-4">
           {items.map((it) => (
             <div key={it.sku} className="pd-card">
@@ -212,7 +203,7 @@ export default function Landing() {
       <section className="pd-section">
         <h2 className="pd-h2">Des sacs pour tous les budgets</h2>
         <p className="pd-h2-sub">
-          Plus le sac est gros, moins le caillou coûte cher — et tout part aux Restos du Cœur.
+          Tu peux jouer sans jamais payer. Les sacs, c&apos;est juste pour aller plus vite.
         </p>
         <div className="pd-cards pd-cards-5">
           {packs.map((p) => (
@@ -238,13 +229,10 @@ export default function Landing() {
         <h2 className="pd-h2" style={{ marginTop: 12, marginBottom: 8 }}>
           Prêt à poser ta pierre ?
         </h2>
-        <p className="pd-sub" style={{ margin: "0 auto 20px", maxWidth: 520 }}>
-          Rejoins PebbleDrop, récupère tes 10 cailloux offerts, et transforme ton jeu
-          en repas pour ceux qui en ont besoin.
+        <p className="pd-sub" style={{ margin: "0 auto 22px", maxWidth: 520 }}>
+          Rejoins PebbleDrop, récupère tes 10 cailloux offerts et ajoute ta trace
+          à la plus grande clairière partagée.
         </p>
-        <span className="pd-charity" style={{ marginBottom: 18 }}>
-          ❤️ 100 % des recettes → Restos du Cœur
-        </span>
         <div>
           <Link href="/register" className="pd-btn pd-btn-primary pd-btn-lg" style={{ textDecoration: "none" }}>
             🪨 Créer mon compte gratuit
@@ -256,7 +244,7 @@ export default function Landing() {
       </section>
 
       <footer className="pd-foot">
-        🪨 PebbleDrop — pose ton caillou, nourris un cœur.
+        🪨 PebbleDrop — pose ton caillou, laisse ta trace.
       </footer>
 
       <LandingStyles />
@@ -381,21 +369,15 @@ function LandingStyles() {
     <style>{`
       .pd-land { position: relative; min-height: 100dvh; overflow-x: hidden; background: var(--bg); }
 
-      /* Décor de forêt fixé en fond */
-      .pd-scene {
-        position: fixed; inset: 0; z-index: 0; pointer-events: none;
-        opacity: 0.95;
-      }
+      .pd-scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.95; }
       .pd-scene > svg { width: 100%; height: 100%; }
 
-      .pd-nav, .pd-hero, .pd-section, .pd-final, .pd-foot, .pd-charity-bar { position: relative; z-index: 1; }
+      .pd-nav, .pd-hero, .pd-section, .pd-final, .pd-foot { position: relative; z-index: 1; }
 
       .pd-nav {
         display: flex; justify-content: space-between; align-items: center; gap: 10px;
         padding: 14px clamp(14px, 4vw, 44px); flex-wrap: wrap;
       }
-
-      .pd-charity-bar { display: flex; justify-content: center; padding: 4px 16px 0; }
 
       /* HERO */
       .pd-hero {
@@ -405,7 +387,6 @@ function LandingStyles() {
       }
       @media (min-width: 940px) { .pd-hero { grid-template-columns: 1.12fr 0.88fr; } }
 
-      /* Panneau translucide derrière le texte du hero → lisibilité sur le décor */
       .pd-hero-left {
         background: rgba(247, 250, 244, 0.72);
         backdrop-filter: blur(6px);
@@ -434,7 +415,6 @@ function LandingStyles() {
         max-width: 520px; margin: 0 0 20px;
       }
 
-      /* Nuancier de cailloux animé */
       .pd-stone-row { display: flex; gap: 7px; margin-bottom: 22px; flex-wrap: wrap; }
       .pd-stone-demo {
         width: 30px; height: 24px; border-radius: 50%;
@@ -453,7 +433,7 @@ function LandingStyles() {
 
       .pd-stats { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 30px; }
       .pd-stats > div { display: flex; flex-direction: column; }
-      .pd-stats strong { font-size: 24px; font-weight: 900; }
+      .pd-stats strong { font-size: 24px; font-weight: 900; color: #17251c; }
       .pd-stats span { color: var(--muted); font-size: 13px; }
 
       .pd-signin { padding: 26px; animation: pdRise 0.6s ease both; }
@@ -468,29 +448,31 @@ function LandingStyles() {
       .pd-section { max-width: 1100px; margin: 0 auto; padding: clamp(24px, 4vw, 52px) clamp(16px, 5vw, 48px); }
       .pd-h2 {
         font-size: clamp(23px, 3.6vw, 34px); font-weight: 900; text-align: center;
-        margin: 0 0 6px; letter-spacing: -0.5px;
+        margin: 0 0 6px; letter-spacing: -0.5px; color: #17251c;
       }
       .pd-h2-sub { text-align: center; color: var(--muted); margin: 0 0 24px; }
       .pd-h2 + .pd-cards, .pd-h2 + .pd-steps { margin-top: 24px; }
 
-      /* Encart don */
-      .pd-donation {
+      /* Encart œuvre collective */
+      .pd-highlight {
         display: flex; gap: 22px; align-items: center; flex-wrap: wrap;
-        background: linear-gradient(135deg, #fff6f4, #ffffff);
-        border: 2px solid #e8452f;
+        background: linear-gradient(135deg, #f4f9f1, #ffffff);
+        border: 2px solid var(--accent);
         border-radius: 22px;
         padding: clamp(20px, 3vw, 32px);
-        box-shadow: 0 12px 34px rgba(194, 38, 26, 0.14);
+        box-shadow: 0 12px 34px rgba(63, 125, 78, 0.14);
       }
-      .pd-donation-icon {
+      .pd-highlight h2 { color: #17251c; }
+      .pd-highlight p, .pd-highlight-list { color: #2e3f34; }
+      .pd-highlight-icon {
         font-size: 54px; line-height: 1;
-        animation: pdHeart 1.8s ease-in-out infinite;
+        animation: pdBob 3s ease-in-out infinite;
       }
-      @keyframes pdHeart {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.16); }
+      @keyframes pdBob {
+        0%, 100% { transform: translateY(0) rotate(-3deg); }
+        50% { transform: translateY(-8px) rotate(3deg); }
       }
-      .pd-donation-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 15px; }
+      .pd-highlight-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 15px; }
 
       /* Cartes */
       .pd-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
