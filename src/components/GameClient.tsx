@@ -61,7 +61,7 @@ type Info = {
 };
 
 type Tool =
-  | "place" | "inspect" | "bomb" | "megabomb" | "nuke"
+  | "explore" | "place" | "inspect" | "bomb" | "megabomb" | "nuke"
   | "bucket" | "swap" | "move" | "erase" | "pick";
 
 type EffectSel = "" | "golden" | "rainbow" | "diamond";
@@ -72,6 +72,7 @@ type Recent = { x: number; y: number; color: string; pseudo: string; at: string 
 
 // Les libellés suivent le thème « cailloux » de la boutique.
 const TOOL_META: Record<Tool, { emoji: string; label: string; inv?: string }> = {
+  explore: { emoji: "🖐️", label: "Explorer" },
   place: { emoji: "🪨", label: "Poser" },
   inspect: { emoji: "🔍", label: "Infos" },
   pick: { emoji: "💧", label: "Pipette" },
@@ -805,6 +806,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         return;
       }
       switch (tool) {
+        case "explore": return; // navigation seule : on ne pose rien
         case "place": return void doPlace(x, y);
         case "inspect": return void doInspect(x, y);
         case "bomb": return void doBomb(x, y, "bomb");
@@ -941,6 +943,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
             ? (x, y) => {
                 // Pose/inspection/pipette = action directe (fluide) ;
                 // les outils destructeurs passent par le bouton de confirmation.
+                if (tool === "explore") return; // on se contente de naviguer
                 if (tool === "place" || tool === "inspect" || tool === "pick") onCellAction(x, y);
                 else { setSelected({ x, y }); sfx("click"); }
               }
@@ -1091,12 +1094,23 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
                 <button
                   className={`pd-btn pd-mini ${brush ? "pd-on" : ""}`}
                   onClick={() => { setBrush((b) => !b); setTool("place"); sfx("click"); }}
-                  title="Glisser pour poser plusieurs cailloux"
+                  title="Façon de poser : au clic, ou en glissant"
                 >
-                  🖌️ Pinceau {brush ? "ON" : "OFF"}
+                  {brush ? "🖌️ Pose au glisser" : "👆 Pose au clic"}
+                </button>
+                <button
+                  className={`pd-btn pd-mini ${tool === "explore" ? "pd-on" : ""}`}
+                  onClick={() => { setTool("explore"); sfx("click"); }}
+                  title="Se déplacer sans rien poser"
+                >
+                  🖐️ Explorer
                 </button>
                 <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
-                  {brush ? "Glisse pour poser une traînée · 2 doigts = déplacer" : "Glisser = déplacer la carte"}
+                  {tool === "explore"
+                    ? "Tu ne poses rien — balade-toi tranquille."
+                    : brush
+                      ? "Glisse pour poser une traînée · 2 doigts = déplacer"
+                      : "Clique pour poser · glisse pour déplacer"}
                 </span>
               </div>
               <div className="pd-palette">
@@ -1411,6 +1425,8 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
             </div>
             <div style={{ display: "grid", gap: 8, fontSize: 14, lineHeight: 1.5 }}>
               <p>🪨 <strong>Poser</strong> : choisis une nuance de caillou et clique une case libre (1 caillou). Une case occupée est verrouillée.</p>
+              <p>🖐️ <strong>Explorer</strong> : mode balade — tu peux zoomer et te déplacer <strong>sans rien poser</strong> (pratique pour regarder la carte sans dépenser).</p>
+              <p>🖌️ <strong>Pose au glisser</strong> : active-la pour poser une traînée de cailloux d&apos;un seul geste (2 doigts pour te déplacer).</p>
               <p>📱 <strong>Mobile</strong> : tape pour viser, confirme avec le gros bouton. Pince pour zoomer, double-tape pour zoomer vite, appui long = infos.</p>
               <p>🖱️ <strong>PC</strong> : molette = zoom, glisser = déplacer, flèches et +/−. Le clic agit directement.</p>
               <p>⛏️ Pioche = 1 case · 🔨 Masse = 3×3 · 🧨 Dynamite = 5×5 (cailloux adverses non protégés).</p>

@@ -525,7 +525,9 @@ export default function PixelCanvas({
       if (d.active) {
         const dx = e.clientX - d.lastX;
         const dy = e.clientY - d.lastY;
-        if (Math.abs(e.clientX - d.startX) + Math.abs(e.clientY - d.startY) > 6) {
+        // Seuil volontairement large : un léger tremblement pendant un
+        // déplacement ne doit jamais être pris pour un clic (pose accidentelle).
+        if (Math.abs(e.clientX - d.startX) + Math.abs(e.clientY - d.startY) > 12) {
           d.moved = true;
           cancelLongPress();
         }
