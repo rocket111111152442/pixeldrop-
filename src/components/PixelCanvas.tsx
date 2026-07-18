@@ -7,6 +7,7 @@ import {
   MIN_ZOOM,
   MAX_ZOOM,
   DEFAULT_ZOOM,
+  fitScale,
 } from "@/lib/canvas-config";
 
 // e : 0 = normal, 1 = doré, 2 = arc-en-ciel, 3 = diamant
@@ -166,7 +167,9 @@ export default function PixelCanvas({
 
     // Pixels
     ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * panX, dpr * panY);
-    ctx.imageSmoothingEnabled = false;
+    // Zoom avant : rendu net « pixel art ». Zoom arrière (scale < 1) : on lisse,
+    // sinon la réduction supprimerait des cailloux et la carte semblerait vide.
+    ctx.imageSmoothingEnabled = scale < 1;
     ctx.drawImage(off, 0, 0);
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -362,11 +365,8 @@ export default function PixelCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const fit = Math.max(
-      MIN_ZOOM,
-      Math.min(rect.width / GRID_WIDTH, rect.height / GRID_HEIGHT) * 0.92,
-    );
-    const scale = Math.max(fit, MIN_ZOOM);
+    // Vue initiale : toute la clairière visible (indispensable sur téléphone).
+    const scale = fitScale(rect.width, rect.height);
     viewRef.current = {
       scale,
       panX: rect.width / 2 - (GRID_WIDTH * scale) / 2,

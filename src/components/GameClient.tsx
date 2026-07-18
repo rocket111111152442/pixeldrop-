@@ -15,7 +15,7 @@ import CanvasBackdrop, { type BackdropHandle } from "@/components/CanvasBackdrop
 import QuestsPanel from "@/components/QuestsPanel";
 import ProfileModal from "@/components/ProfileModal";
 import { LogoMark } from "@/components/Logo";
-import { PALETTE, GRID_WIDTH, GRID_HEIGHT } from "@/lib/canvas-config";
+import { PALETTE, GRID_WIDTH, GRID_HEIGHT, fitScale } from "@/lib/canvas-config";
 import { ITEM_LABELS } from "@/lib/products";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { playSound, vibrate, type SoundName } from "@/lib/sounds";
@@ -899,7 +899,12 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
     [centerOfView, goTo],
   );
 
-  const fitMap = useCallback(() => goTo(500, 500, 1), [goTo]);
+  // « Toute la carte » : on recalcule l'échelle qui fait tenir la clairière
+  // dans l'écran courant (sur téléphone, c'est bien en dessous de 1).
+  const fitMap = useCallback(() => {
+    const v = viewRef.current;
+    goTo(GRID_WIDTH / 2, GRID_HEIGHT / 2, fitScale(v?.w ?? 0, v?.h ?? 0));
+  }, [goTo]);
 
   const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});

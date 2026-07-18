@@ -6,9 +6,22 @@ export const TOTAL_PIXELS = GRID_WIDTH * GRID_HEIGHT; // 1 000 000 cailloux
 
 export const FREE_PIXELS = 10;
 
-export const MIN_ZOOM = 1;
+// Zoom : "scale" = nombre de pixels écran par caillou.
+// MIN_ZOOM doit descendre BIEN en dessous de 1, sinon la carte (1000 cailloux
+// de large) ne peut jamais tenir sur un écran de téléphone (~390 px) et le
+// pincement pour dézoomer semble ne rien faire.
+export const MIN_ZOOM = 0.08;
 export const MAX_ZOOM = 40;
 export const DEFAULT_ZOOM = 8;
+
+/** Échelle qui fait tenir toute la clairière dans une zone donnée. */
+export function fitScale(width: number, height: number): number {
+  if (width <= 0 || height <= 0) return 1;
+  return Math.max(
+    MIN_ZOOM,
+    Math.min(width / GRID_WIDTH, height / GRID_HEIGHT) * 0.92,
+  );
+}
 
 // ── Palette de cailloux : des teintes minérales, de la plus claire à la plus
 // foncée. Calcaire, grès, ardoise, granit, mousse et lichen.
