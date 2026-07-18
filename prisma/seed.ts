@@ -21,7 +21,12 @@ async function main() {
   if (existing) {
     await prisma.user.update({
       where: { email },
-      data: { hashedPassword, isAdmin: true, banned: false },
+      data: {
+        hashedPassword,
+        isAdmin: true,
+        emailVerified: new Date(),
+        banned: false,
+      },
     });
     console.log(`Admin mis à jour : ${email}`);
   } else {
@@ -34,6 +39,7 @@ async function main() {
       data: {
         email,
         hashedPassword,
+        emailVerified: new Date(),
         pseudo: finalPseudo,
         name: finalPseudo,
         isAdmin: true,

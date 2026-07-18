@@ -34,7 +34,11 @@ function RegisterForm() {
   const [website, setWebsite] = useState(""); // honeypot anti-bot
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [err, setErr] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [step, setStep] = useState<"form" | "code">("form");
+  const [code, setCode] = useState("");
   const [providers, setProviders] = useState<Record<string, unknown>>({});
 
   // On n'affiche un bouton OAuth que si le provider est réellement configuré.
@@ -52,21 +56,61 @@ function RegisterForm() {
     e.preventDefault();
     setBusy(true);
     setErr("");
+    setNotice("");
     const r = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pseudo, email, password, referral, website, acceptTerms }),
     });
-    const data = await r.json();
+    const data = await r.json().catch(() => ({}));
     if (!r.ok) {
       setErr(data.error || "Erreur.");
       setBusy(false);
       return;
     }
-    const res = await signIn("credentials", { email, password, redirect: false });
     setBusy(false);
-    if (res?.error) router.push("/login");
-    else router.push("/");
+    setStep("code");
+    setNotice(
+      `Code envoyé à ${email}. Il expire dans ${data.expiresInMinutes || 10} minutes.`,
+    );
+  };
+
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setErr("");
+    const res = await signIn("credentials", {
+      email,
+      password,
+      emailCode: code,
+      redirect: false,
+    });
+    setBusy(false);
+    if (res?.error) {
+      setErr("Code invalide ou expiré.");
+      return;
+    }
+    router.push("/");
+  };
+
+  const resendCode = async () => {
+    setResending(true);
+    setErr("");
+    setNotice("");
+    const r = await fetch("/api/email-verification/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, purpose: "register" }),
+    });
+    const data = await r.json().catch(() => ({}));
+    setResending(false);
+    if (!r.ok) {
+      setErr(data.error || "Impossible de renvoyer le code.");
+      return;
+    }
+    setNotice(
+      `Nouveau code envoyé à ${email}. Il expire dans ${data.expiresInMinutes || 10} minutes.`,
+    );
   };
 
   return (
@@ -93,69 +137,105 @@ function RegisterForm() {
           </>
         )}
 
-        <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
-          <input className="pd-input" placeholder="Pseudo" value={pseudo} onChange={(e) => setPseudo(e.target.value)} minLength={3} maxLength={20} required />
-          <input className="pd-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <div>
-            <input className="pd-input" type="password" placeholder="Mot de passe (8+ caractères)" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required />
-            {password && (
-              <div style={{ marginTop: 6 }}>
-                <div style={{ height: 5, borderRadius: 999, background: "var(--panel-2)", overflow: "hidden" }}>
-                  <div style={{ width: `${strength.pct}%`, height: "100%", background: strength.color, transition: "width 0.2s" }} />
-                </div>
-                <div style={{ fontSize: 11, color: strength.color, marginTop: 3 }}>{strength.label}</div>
-              </div>
-            )}
-          </div>
-          <input className="pd-input" placeholder="Code parrain (optionnel)" value={referral} onChange={(e) => setReferral(e.target.value)} maxLength={20} />
-          {/* Honeypot invisible : les bots le remplissent, pas les humains. */}
-          <input
-            type="text"
-            name="website"
-            tabIndex={-1}
-            autoComplete="off"
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
-            aria-hidden="true"
-          />
-          {/* Acceptation obligatoire des conditions */}
-          <label
-            style={{
-              display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13,
-              lineHeight: 1.45, background: "var(--panel-2)", padding: "10px 12px",
-              borderRadius: 10, border: `1px solid ${acceptTerms ? "var(--accent)" : "var(--border)"}`,
-              cursor: "pointer",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-              required
-              style={{ marginTop: 2, width: 17, height: 17, flexShrink: 0 }}
-            />
-            <span>
-              J&apos;ai lu et j&apos;accepte les{" "}
-              <Link href="/conditions" target="_blank" style={{ color: "var(--accent)", fontWeight: 600 }}>
-                conditions générales d&apos;utilisation et de vente
-              </Link>
-              . Je reconnais que les cailloux et objets achetés sont des contenus
-              numériques sans valeur monétaire, non remboursables.
-            </span>
-          </label>
+        {notice && <div style={{ color: "var(--muted)", fontSize: 13, marginBottom: 10 }}>{notice}</div>}
 
-          {err && <div style={{ color: "#ff8ba0", fontSize: 13 }}>{err}</div>}
-          <button
-            className="pd-btn pd-btn-primary"
-            type="submit"
-            disabled={busy || !acceptTerms}
-            style={{ width: "100%" }}
-            title={!acceptTerms ? "Tu dois accepter les conditions pour créer ton compte" : undefined}
-          >
-            {busy ? "Création…" : "Créer mon compte"}
-          </button>
-        </form>
+        {step === "code" ? (
+          <form onSubmit={verifyCode} style={{ display: "grid", gap: 10 }}>
+            <input
+              className="pd-input"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              placeholder="Code à 6 chiffres"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              autoFocus
+              required
+            />
+            {err && <div style={{ color: "#ff8ba0", fontSize: 13 }}>{err}</div>}
+            <button className="pd-btn pd-btn-primary" type="submit" disabled={busy || code.length !== 6} style={{ width: "100%" }}>
+              {busy ? "Vérification…" : "Valider le code"}
+            </button>
+            <button className="pd-btn" type="button" onClick={resendCode} disabled={resending} style={{ width: "100%" }}>
+              {resending ? "Envoi…" : "Renvoyer le code"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStep("form");
+                setCode("");
+                setErr("");
+                setNotice("");
+              }}
+              style={{ border: 0, background: "transparent", color: "var(--muted)", cursor: "pointer", padding: 6 }}
+            >
+              Modifier mes informations
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
+            <input className="pd-input" placeholder="Pseudo" value={pseudo} onChange={(e) => setPseudo(e.target.value)} minLength={3} maxLength={20} required />
+            <input className="pd-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <div>
+              <input className="pd-input" type="password" placeholder="Mot de passe (8+ caractères)" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required />
+              {password && (
+                <div style={{ marginTop: 6 }}>
+                  <div style={{ height: 5, borderRadius: 999, background: "var(--panel-2)", overflow: "hidden" }}>
+                    <div style={{ width: `${strength.pct}%`, height: "100%", background: strength.color, transition: "width 0.2s" }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: strength.color, marginTop: 3 }}>{strength.label}</div>
+                </div>
+              )}
+            </div>
+            <input className="pd-input" placeholder="Code parrain (optionnel)" value={referral} onChange={(e) => setReferral(e.target.value)} maxLength={20} />
+            {/* Honeypot invisible : les bots le remplissent, pas les humains. */}
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
+              aria-hidden="true"
+            />
+            {/* Acceptation obligatoire des conditions */}
+            <label
+              style={{
+                display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13,
+                lineHeight: 1.45, background: "var(--panel-2)", padding: "10px 12px",
+                borderRadius: 10, border: `1px solid ${acceptTerms ? "var(--accent)" : "var(--border)"}`,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                required
+                style={{ marginTop: 2, width: 17, height: 17, flexShrink: 0 }}
+              />
+              <span>
+                J&apos;ai lu et j&apos;accepte les{" "}
+                <Link href="/conditions" target="_blank" style={{ color: "var(--accent)", fontWeight: 600 }}>
+                  conditions générales d&apos;utilisation et de vente
+                </Link>
+                . Je reconnais que les cailloux et objets achetés sont des contenus
+                numériques sans valeur monétaire, non remboursables.
+              </span>
+            </label>
+
+            {err && <div style={{ color: "#ff8ba0", fontSize: 13 }}>{err}</div>}
+            <button
+              className="pd-btn pd-btn-primary"
+              type="submit"
+              disabled={busy || !acceptTerms}
+              style={{ width: "100%" }}
+              title={!acceptTerms ? "Tu dois accepter les conditions pour créer ton compte" : undefined}
+            >
+              {busy ? "Création…" : "Créer mon compte"}
+            </button>
+          </form>
+        )}
 
         <p style={{ textAlign: "center", marginTop: 16, fontSize: 14, color: "var(--muted)" }}>
           Déjà inscrit ? <Link href="/login" style={{ color: "var(--accent)" }}>Se connecter</Link>

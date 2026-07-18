@@ -11,8 +11,12 @@ export default function LoginPage() {
   const [providers, setProviders] = useState<Record<string, unknown>>({});
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"form" | "code">("form");
   const [err, setErr] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/providers")
@@ -28,14 +32,57 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setErr("");
+    setNotice("");
+    const r = await fetch("/api/email-verification/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, purpose: "login" }),
+    });
+    const data = await r.json().catch(() => ({}));
+    setBusy(false);
+    if (!r.ok) {
+      setErr(data.error || "Email ou mot de passe incorrect.");
+      return;
+    }
+    setStep("code");
+    setNotice(
+      `Code envoyé à ${email}. Il expire dans ${data.expiresInMinutes || 10} minutes.`,
+    );
+  };
+
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setErr("");
     const res = await signIn("credentials", {
       email,
       password,
+      emailCode: code,
       redirect: false,
     });
     setBusy(false);
-    if (res?.error) setErr("Email ou mot de passe incorrect.");
+    if (res?.error) setErr("Code invalide ou expiré.");
     else router.push("/");
+  };
+
+  const resendCode = async () => {
+    setResending(true);
+    setErr("");
+    setNotice("");
+    const r = await fetch("/api/email-verification/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, purpose: "login" }),
+    });
+    const data = await r.json().catch(() => ({}));
+    setResending(false);
+    if (!r.ok) {
+      setErr(data.error || "Impossible de renvoyer le code.");
+      return;
+    }
+    setNotice(
+      `Nouveau code envoyé à ${email}. Il expire dans ${data.expiresInMinutes || 10} minutes.`,
+    );
   };
 
   return (
@@ -80,14 +127,50 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
-          <input className="pd-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input className="pd-input" type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          {err && <div style={{ color: "#ff8ba0", fontSize: 13 }}>{err}</div>}
-          <button className="pd-btn pd-btn-primary" type="submit" disabled={busy} style={{ width: "100%" }}>
-            {busy ? "Connexion…" : "Se connecter"}
-          </button>
-        </form>
+        {notice && <div style={{ color: "var(--muted)", fontSize: 13, marginBottom: 10 }}>{notice}</div>}
+
+        {step === "code" ? (
+          <form onSubmit={verifyCode} style={{ display: "grid", gap: 10 }}>
+            <input
+              className="pd-input"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              placeholder="Code à 6 chiffres"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              autoFocus
+              required
+            />
+            {err && <div style={{ color: "#ff8ba0", fontSize: 13 }}>{err}</div>}
+            <button className="pd-btn pd-btn-primary" type="submit" disabled={busy || code.length !== 6} style={{ width: "100%" }}>
+              {busy ? "Vérification…" : "Valider le code"}
+            </button>
+            <button className="pd-btn" type="button" onClick={resendCode} disabled={resending} style={{ width: "100%" }}>
+              {resending ? "Envoi…" : "Renvoyer le code"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStep("form");
+                setCode("");
+                setErr("");
+                setNotice("");
+              }}
+              style={{ border: 0, background: "transparent", color: "var(--muted)", cursor: "pointer", padding: 6 }}
+            >
+              Modifier mes identifiants
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
+            <input className="pd-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input className="pd-input" type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            {err && <div style={{ color: "#ff8ba0", fontSize: 13 }}>{err}</div>}
+            <button className="pd-btn pd-btn-primary" type="submit" disabled={busy} style={{ width: "100%" }}>
+              {busy ? "Connexion…" : "Recevoir le code"}
+            </button>
+          </form>
+        )}
 
         <p style={{ textAlign: "center", marginTop: 16, fontSize: 14, color: "var(--muted)" }}>
           Pas de compte ? <Link href="/register" style={{ color: "var(--accent)" }}>Créer un compte</Link>

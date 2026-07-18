@@ -243,7 +243,12 @@ async function handle(req: Request) {
       if (existing) {
         await prisma.user.update({
           where: { email },
-          data: { hashedPassword, isAdmin: true, banned: false },
+          data: {
+            hashedPassword,
+            isAdmin: true,
+            emailVerified: new Date(),
+            banned: false,
+          },
         });
         admin = "mis à jour";
       } else {
@@ -254,7 +259,7 @@ async function handle(req: Request) {
         await prisma.user.create({
           data: {
             email, hashedPassword, pseudo, name: pseudo,
-            isAdmin: true, credits: 1_000_000, freeGranted: false,
+            emailVerified: new Date(), isAdmin: true, credits: 1_000_000, freeGranted: false,
           },
         });
         admin = "créé";

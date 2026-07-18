@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { FREE_PIXELS } from "@/lib/canvas-config";
 import { cleanEmail, cleanPseudo } from "@/lib/security";
 import { rateLimit, ipOf, tooMany } from "@/lib/rate-limit";
+import { isMailConfigured } from "@/lib/mailer";
+import {
+  createAndSendEmailCode,
+  EMAIL_CODE_EXPIRES_IN_MINUTES,
+} from "@/lib/email-verification";
 
 const REFERRAL_BONUS = 5;
 
@@ -40,12 +45,32 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
+  if (!isMailConfigured()) {
+    return NextResponse.json(
+      { error: "L'envoi d'email n'est pas encore configuré." },
+      { status: 503 },
+    );
+  }
 
   const pseudo =
     cleanPseudo(body.pseudo) || `Pixel_${Math.random().toString(36).slice(2, 6)}`;
 
-  const existingEmail = await prisma.user.findUnique({ where: { email } });
+  const existingEmail = await prisma.user.findUnique({
+    where: { email },
+    select: { hashedPassword: true, emailVerified: true },
+  });
   if (existingEmail) {
+    if (!existingEmail.emailVerified && existingEmail.hashedPassword) {
+      const ok = await bcrypt.compare(password, existingEmail.hashedPassword);
+      if (ok) {
+        await createAndSendEmailCode(email, "register");
+        return NextResponse.json({
+          ok: true,
+          verificationRequired: true,
+          expiresInMinutes: EMAIL_CODE_EXPIRES_IN_MINUTES,
+        });
+      }
+    }
     return NextResponse.json(
       { error: "Un compte existe déjà avec cet email." },
       { status: 409 },
@@ -78,6 +103,7 @@ export async function POST(req: Request) {
         name: pseudo,
         credits: FREE_PIXELS + (referrer ? REFERRAL_BONUS : 0),
         isAdmin,
+        emailVerified: null,
         referredById: referrer?.id ?? null,
         termsAcceptedAt: new Date(), // preuve d'acceptation des CGU
       },
@@ -90,5 +116,12 @@ export async function POST(req: Request) {
     }
   });
 
-  return NextResponse.json({ ok: true, referralApplied: !!referrer });
+  await createAndSendEmailCode(email, "register");
+
+  return NextResponse.json({
+    ok: true,
+    referralApplied: !!referrer,
+    verificationRequired: true,
+    expiresInMinutes: EMAIL_CODE_EXPIRES_IN_MINUTES,
+  });
 }

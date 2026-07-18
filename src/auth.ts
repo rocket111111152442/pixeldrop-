@@ -7,6 +7,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { ipOf, rateLimit } from "@/lib/rate-limit";
+import { consumeEmailCode } from "@/lib/email-verification";
 
 // Les providers OAuth ne sont activés que si leurs identifiants sont présents,
 // pour que l'application démarre même partiellement configurée.
@@ -53,10 +54,12 @@ providers.push(
     credentials: {
       email: { label: "Email", type: "email" },
       password: { label: "Mot de passe", type: "password" },
+      emailCode: { label: "Code email", type: "text" },
     },
     async authorize(credentials, request) {
       const email = String(credentials?.email || "").toLowerCase().trim();
       const password = String(credentials?.password || "");
+      const emailCode = String(credentials?.emailCode || "");
       if (!email || !password) return null;
       if (!rateLimit(`login:${ipOf(request)}:${email}`, 10, 15 * 60_000)) return null;
 
@@ -65,6 +68,18 @@ providers.push(
 
       const ok = await bcrypt.compare(password, user.hashedPassword);
       if (!ok) return null;
+
+      const codeOk =
+        (await consumeEmailCode(email, "login", emailCode)) ||
+        (await consumeEmailCode(email, "register", emailCode));
+      if (!codeOk) return null;
+
+      if (!user.emailVerified) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerified: new Date() },
+        });
+      }
 
       return {
         id: user.id,

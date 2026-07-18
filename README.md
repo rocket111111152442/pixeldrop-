@@ -35,6 +35,8 @@ Il te faut une base **PostgreSQL** (gratuit : [Neon](https://neon.tech),
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Connexion Google (mise en avant) |
 | `AUTH_MICROSOFT_ENTRA_ID_ID` / `_SECRET` | Connexion Microsoft |
 | `AUTH_APPLE_ID` / `AUTH_APPLE_SECRET` | Connexion Apple |
+| `SMTP_USER` / `SMTP_PASS` | Envoi des codes email pour l'inscription et la connexion classique |
+| `MAIL_FROM` | Adresse affichée comme expéditeur des emails |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Compte admin (créé par le seed, mot de passe 12 caractères minimum) |
 | `SETUP_TOKEN` | Token secret optionnel pour lancer `/api/setup` sans session admin |
 | `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Clés Stripe |
@@ -42,7 +44,15 @@ Il te faut une base **PostgreSQL** (gratuit : [Neon](https://neon.tech),
 | `NEXT_PUBLIC_CURRENCY` | Devise (`eur` par défaut) |
 
 Les providers de connexion ne s'affichent que s'ils sont configurés. Le
-**compte email + mot de passe** fonctionne toujours, sans configuration externe.
+**compte email + mot de passe** envoie un code à 6 chiffres par email à
+l'inscription et à chaque connexion ; configure donc le SMTP avant d'ouvrir la
+connexion classique aux joueurs.
+
+### Vérification email avec Gmail
+1. Active la validation en 2 étapes sur le compte Gmail utilisé pour l'envoi.
+2. Crée un mot de passe d'application Gmail.
+3. Dans Vercel et dans `.env`, renseigne `SMTP_USER`, `SMTP_PASS` et `MAIL_FROM`.
+4. Pour Gmail, garde `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465` et `SMTP_SECURE=true`.
 
 ### Connexion Google (recommandé, le plus simple)
 1. [console.cloud.google.com](https://console.cloud.google.com/apis/credentials) → *Create OAuth client ID* → type *Web application*.
