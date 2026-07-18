@@ -58,7 +58,7 @@ const SOMMAIRE = [
   "Nature juridique des Cailloux et des Objets",
   "Commandes, prix et paiement",
   "Droit de rétractation",
-  "Engagement caritatif",
+  "Engagement caritatif (5 %)",
   "Disponibilité, évolutions et interruptions",
   "Propriété intellectuelle",
   "Données personnelles",
@@ -95,7 +95,7 @@ export default function ConditionsPage() {
         monétaire</strong>, non remboursables en argent et non revendables (article 9) ;
         en achetant, vous demandez leur mise à disposition immédiate et
         <strong> renoncez à votre droit de rétractation</strong> (article 11) ;
-        <strong> l&apos;argent des achats est reversé à une association caritative</strong> (article 12).
+        <strong> 5 % des sommes encaissées sont reversées à une association caritative</strong> (article 12).
       </div>
 
       {/* Sommaire */}
@@ -328,16 +328,16 @@ export default function ConditionsPage() {
       </Art>
 
       {/* ─────────── ENGAGEMENT CARITATIF ─────────── */}
-      <Art n={12} titre="Engagement caritatif">
+      <Art n={12} titre="Engagement caritatif (5 %)">
         <div style={{ background: "#f4f9f1", border: "2px solid var(--accent)", borderRadius: 12, padding: 16 }}>
           <p style={{ margin: 0, fontSize: 16 }}>
-            <strong>L&apos;Éditeur s&apos;engage à reverser l&apos;argent des achats réalisés
-            sur le Site</strong> à une
+            <strong>L&apos;Éditeur s&apos;engage à reverser 5 % du montant total des sommes
+            effectivement encaissées</strong> au titre des achats réalisés sur le Site à une
             association caritative.
           </p>
         </div>
         <p>
-          <strong>Assiette.</strong> Le reversement porte sur les sommes effectivement
+          <strong>Assiette.</strong> Le reversement porte sur 5 % des sommes effectivement
           encaissées, c&apos;est-à-dire hors paiements échoués, impayés et sommes remboursées.
         </p>
         <p>
