@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
@@ -34,6 +34,16 @@ function RegisterForm() {
   const [website, setWebsite] = useState(""); // honeypot anti-bot
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [providers, setProviders] = useState<Record<string, unknown>>({});
+
+  // On n'affiche un bouton OAuth que si le provider est réellement configuré.
+  useEffect(() => {
+    fetch("/api/auth/providers")
+      .then((r) => r.json())
+      .then(setProviders)
+      .catch(() => setProviders({}));
+  }, []);
+  const hasGoogle = Object.prototype.hasOwnProperty.call(providers, "google");
 
   const strength = strengthOf(password);
 
@@ -68,15 +78,19 @@ function RegisterForm() {
           Crée ton compte — 10 cailloux offerts{referral ? " (+5 avec le parrainage 🎁)" : ""}.
         </p>
 
-        <button className="pd-btn pd-btn-google" style={{ width: "100%", padding: 14 }} onClick={() => signIn("google", { callbackUrl: "/" })}>
-          Continuer avec Google
-        </button>
+        {hasGoogle && (
+          <>
+            <button className="pd-btn pd-btn-google" style={{ width: "100%", padding: 14 }} onClick={() => signIn("google", { callbackUrl: "/" })}>
+              Continuer avec Google
+            </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0", color: "var(--muted)", fontSize: 13 }}>
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          ou
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-        </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0", color: "var(--muted)", fontSize: 13 }}>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              ou
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            </div>
+          </>
+        )}
 
         <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
           <input className="pd-input" placeholder="Pseudo" value={pseudo} onChange={(e) => setPseudo(e.target.value)} minLength={3} maxLength={20} required />

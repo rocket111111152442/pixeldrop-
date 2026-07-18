@@ -343,9 +343,11 @@ function SignInCard() {
         </button>
       )}
 
-      <div className="pd-or">
-        <span />ou avec un email<span />
-      </div>
+      {(has("google") || has("microsoft-entra-id") || has("apple")) && (
+        <div className="pd-or">
+          <span />ou avec un email<span />
+        </div>
+      )}
 
       <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
         <input className="pd-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />

@@ -22,6 +22,7 @@ export default function LoginPage() {
   }, []);
 
   const has = (id: string) => Object.prototype.hasOwnProperty.call(providers, id);
+  const hasOAuth = has("google") || has("microsoft-entra-id") || has("apple");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,11 +72,13 @@ export default function LoginPage() {
           )}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0", color: "var(--muted)", fontSize: 13 }}>
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          ou avec un email
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-        </div>
+        {hasOAuth && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "20px 0", color: "var(--muted)", fontSize: 13 }}>
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            ou avec un email
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          </div>
+        )}
 
         <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
           <input className="pd-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
