@@ -818,7 +818,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
         return;
       }
       switch (tool) {
-        case "explore": return; // navigation seule : on ne pose rien
+        case "explore": return void doInspect(x, y); // navigation + lecture, sans rien poser
         case "place": return void doPlace(x, y);
         case "inspect": return void doInspect(x, y);
         case "bomb": return void doBomb(x, y, "bomb");
@@ -961,7 +961,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
             ? (x, y) => {
                 // Pose/inspection/pipette = action directe (fluide) ;
                 // les outils destructeurs passent par le bouton de confirmation.
-                if (tool === "explore") return; // on se contente de naviguer
+                if (tool === "explore") return void onCellAction(x, y);
                 if (tool === "place" || tool === "inspect" || tool === "pick") onCellAction(x, y);
                 else { setSelected({ x, y }); sfx("click"); }
               }
@@ -1358,9 +1358,34 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
               </div>
               {info.text && <div style={{ padding: 8, background: "var(--panel-2)", borderRadius: 8 }}>{info.text}</div>}
               {info.link && (
-                <a href={info.link} target="_blank" rel="noopener noreferrer nofollow" className="pd-btn pd-btn-primary" style={{ textDecoration: "none" }}>
-                  🔗 Ouvrir le lien
-                </a>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <div
+                    style={{
+                      padding: "8px 10px",
+                      background: "var(--panel-2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 8,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    <div style={{ color: "var(--muted)", fontSize: 12, marginBottom: 3 }}>Site</div>
+                    <span style={{ fontSize: 13 }}>{info.link}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <a href={info.link} target="_blank" rel="noopener noreferrer nofollow" className="pd-btn pd-btn-primary" style={{ textDecoration: "none" }}>
+                      🔗 Ouvrir le site
+                    </a>
+                    <button
+                      className="pd-btn pd-mini"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(info.link || "").catch(() => {});
+                        flash("🔗 Site copié !", "success");
+                      }}
+                    >
+                      Copier le site
+                    </button>
+                  </div>
+                </div>
               )}
               <div style={{ display: "flex", gap: 6 }}>
                 <button
@@ -1370,7 +1395,7 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
                     flash("🔗 Lien du caillou copié !", "success");
                   }}
                 >
-                  🔗 Copier
+                  🔗 Copier la position
                 </button>
                 {me?.authenticated && (
                   <button
