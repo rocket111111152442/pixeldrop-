@@ -149,8 +149,13 @@ const INSULT_TERMS = [
   "pute",
   "fdp",
   "encule",
+  "enculer",
+  "encules",
+  "enculez",
   "enculee",
   "enculée",
+  "enclule",
+  "enclules",
   "ferme ta gueule",
   "fils de pute",
   "gogole",
@@ -176,6 +181,13 @@ const INSULT_TERMS = [
   "tocard",
   "trou du cul",
   "va te faire foutre",
+];
+
+const INSULT_PATTERNS: { label: string; pattern: RegExp }[] = [
+  {
+    label: "injure explicite",
+    pattern: /(^|[^a-z0-9])enc(?:u|lu)l[a-z0-9]*($|[^a-z0-9])/i,
+  },
 ];
 
 function escapeRegExp(value: string): string {
@@ -223,6 +235,14 @@ function hasAny(haystack: string, terms: string[]): string | null {
     if (new RegExp(`(^|[^a-z0-9])${fuzzy}($|[^a-z0-9])`, "i").test(loose)) {
       return term;
     }
+  }
+  return null;
+}
+
+function hasPattern(haystack: string, patterns: { label: string; pattern: RegExp }[]) {
+  const loose = deobfuscateText(haystack);
+  for (const item of patterns) {
+    if (item.pattern.test(loose)) return item.label;
   }
   return null;
 }
@@ -446,7 +466,7 @@ export function moderateContent(input: ModerationInput): ModerationVerdict {
     );
   }
 
-  const insult = hasAny(text, INSULT_TERMS);
+  const insult = hasAny(text, INSULT_TERMS) || hasPattern(text, INSULT_PATTERNS);
   if (insult) {
     out = strongest(
       out,
