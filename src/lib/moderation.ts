@@ -121,41 +121,108 @@ const THREAT_TERMS = [
   "je vais te tuer",
   "je vais te frapper",
   "menace de mort",
+  "va mourir",
   "dox",
   "doxx",
   "adresse de ",
 ];
 
 const INSULT_TERMS = [
+  "abruti",
+  "batard",
+  "bâtard",
+  "boloss",
+  "bouffon",
+  "cas social",
+  "cassos",
+  "clochard",
+  "con",
+  "conne",
   "connard",
   "connasse",
+  "cretin",
+  "crétin",
+  "debile",
+  "débile",
+  "enculé",
   "salope",
   "pute",
   "fdp",
   "encule",
   "enculee",
-  "batard",
-  "bouffon",
-  "debile",
-  "abruti",
+  "enculée",
+  "ferme ta gueule",
+  "fils de pute",
+  "gogole",
+  "gros con",
+  "grosse merde",
+  "imbecile",
+  "imbécile",
+  "mange tes morts",
+  "mongol",
+  "nique ta mere",
+  "nique ta mère",
+  "nique ta race",
+  "ntm",
+  "pd",
+  "petasse",
+  "pétasse",
+  "poufiasse",
+  "sale con",
+  "sale merde",
+  "sale pute",
   "ta gueule",
+  "tg",
+  "tocard",
+  "trou du cul",
+  "va te faire foutre",
 ];
 
-function normalizeText(value: string): string {
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function deobfuscateText(value: string): string {
   return value
     .normalize("NFKC")
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "")
+    .replace(/[@4]/g, "a")
+    .replace(/[0]/g, "o")
+    .replace(/[!1]/g, "i")
+    .replace(/[3]/g, "e")
+    .replace(/[$5]/g, "s")
+    .replace(/[7]/g, "t")
+    .replace(/[8]/g, "b")
+    .replace(/([a-z0-9])\1{2,}/g, "$1$1");
+}
+
+function normalizeText(value: string): string {
+  return deobfuscateText(value)
+    .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function hasAny(haystack: string, terms: string[]): string | null {
+  const loose = deobfuscateText(haystack);
+  const normalized = normalizeText(haystack);
+  const bounded = ` ${normalized} `;
+
   for (const term of terms) {
     const n = normalizeText(term);
-    if (haystack.includes(n)) return term;
+    if (!n) continue;
+    if (bounded.includes(` ${n} `)) return term;
+
+    const words = n.split(" ").filter(Boolean);
+    const fuzzy = words
+      .map((word) => [...word].map(escapeRegExp).join("[^a-z0-9]*"))
+      .join("[^a-z0-9]+");
+    if (new RegExp(`(^|[^a-z0-9])${fuzzy}($|[^a-z0-9])`, "i").test(loose)) {
+      return term;
+    }
   }
   return null;
 }
@@ -312,7 +379,7 @@ function moderateUrl(raw: string): ModerationVerdict {
 
 export function moderateContent(input: ModerationInput): ModerationVerdict {
   let out = verdict("allow", "review", "ok", "OK", []);
-  const text = normalizeText(input.text || "");
+  const text = input.text || "";
   const urls = [input.link, ...extractUrls(input.text)].filter(Boolean) as string[];
 
   for (const url of urls) {
@@ -405,6 +472,42 @@ export function moderateContent(input: ModerationInput): ModerationVerdict {
   }
 
   return out;
+}
+
+export async function moderateVisibleChatMessages(limit = 100) {
+  const messages = await prisma.chatMessage.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: { user: { select: { isAdmin: true } } },
+  });
+
+  let cleaned = 0;
+  for (const message of messages) {
+    if (message.user.isAdmin) continue;
+    const moderation = moderateContent({ targetType: "chat", text: message.text });
+    if (moderation.decision === "allow") continue;
+
+    await prisma.chatMessage.updateMany({
+      where: { id: message.id, deletedAt: null },
+      data: {
+        deletedAt: new Date(),
+        deletedReason: moderation.reason,
+        deletedById: "moderation-bot",
+      },
+    });
+    await applyModerationVerdict({
+      userId: message.userId,
+      source: "bot",
+      targetType: "chat",
+      targetId: message.id,
+      text: message.text,
+      verdict: moderation,
+    });
+    cleaned++;
+  }
+
+  return cleaned;
 }
 
 export function banDates(verdict: ModerationVerdict, now = new Date()) {

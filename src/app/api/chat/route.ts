@@ -4,12 +4,19 @@ import { prisma } from "@/lib/prisma";
 import { cleanText } from "@/lib/security";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { addXp, awardAchievements, XP_CHAT } from "@/lib/game";
-import { applyModerationVerdict, moderateContent, publicBanMessage } from "@/lib/moderation";
+import {
+  applyModerationVerdict,
+  moderateContent,
+  moderateVisibleChatMessages,
+  publicBanMessage,
+} from "@/lib/moderation";
 
 export const dynamic = "force-dynamic";
 
 // Chat global — lecture publique, écriture pour les joueurs connectés.
 export async function GET() {
+  await moderateVisibleChatMessages();
+
   const messages = await prisma.chatMessage.findMany({
     where: { deletedAt: null },
     orderBy: { createdAt: "desc" },
