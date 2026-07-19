@@ -62,17 +62,37 @@ export default function Landing() {
       {/* ── HERO ── */}
       <section className="pd-hero">
         <div className="pd-hero-left">
-          <div className="pd-badge">🎁 10 cailloux offerts à l&apos;inscription</div>
+          <div className="pd-badge">🎁 10 cailloux offerts pour essayer</div>
           <h1 className="pd-title">
-            Un million de cailloux.
+            Pose ton caillou sur une carte géante.
             <br />
-            <span className="pd-grad">Laisse ta trace dans la clairière.</span>
+            <span className="pd-grad">Chaque case appartient à quelqu&apos;un.</span>
           </h1>
           <p className="pd-sub">
-            Une immense clairière partagée que tout le monde construit ensemble,
-            caillou par caillou. Choisis ta pierre, pose-la, grave un message ou
-            un lien dessous — et regarde l&apos;œuvre collective grandir en direct.
+            PebbleDrop est une clairière en ligne avec <strong>1 000 000 de cases</strong>.
+            Tu choisis une case, tu poses un caillou de ta couleur, puis tu peux cacher
+            un message ou un site dessous. Quand quelqu&apos;un clique sur ton caillou, il
+            découvre ce que tu as laissé.
           </p>
+
+          <ol className="pd-concept-flow" aria-label="Comment fonctionne PebbleDrop">
+            <li>
+              <strong>1</strong>
+              <span>Choisis une case</span>
+            </li>
+            <li>
+              <strong>2</strong>
+              <span>Pose ton caillou</span>
+            </li>
+            <li>
+              <strong>3</strong>
+              <span>Ajoute un mot ou un site</span>
+            </li>
+            <li>
+              <strong>4</strong>
+              <span>Les autres le découvrent</span>
+            </li>
+          </ol>
 
           {/* Nuancier de cailloux */}
           <div className="pd-stone-row">
@@ -96,16 +116,16 @@ export default function Landing() {
 
           <div className="pd-stats">
             <div>
-              <strong>1 000 000</strong>
-              <span>cailloux à poser</span>
+              <strong>1 case</strong>
+              <span>= 1 caillou visible sur la carte</span>
             </div>
             <div>
               <strong>10</strong>
               <span>offerts, sans payer</span>
             </div>
             <div>
-              <strong>Solidarité</strong>
-              <span>l&apos;argent part à une association</span>
+              <strong>Message</strong>
+              <span>ou site caché sous ton caillou</span>
             </div>
           </div>
         </div>
@@ -121,17 +141,18 @@ export default function Landing() {
           <div className="pd-highlight-icon">🗿</div>
           <div style={{ flex: 1, minWidth: 260 }}>
             <h2 style={{ margin: "0 0 8px", fontSize: 26, fontWeight: 900 }}>
-              Une œuvre que personne ne peut faire seul
+              Le concept en une phrase
             </h2>
             <p style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.6 }}>
-              Chaque caillou posé reste. Le tien devient une pièce d&apos;une fresque
-              construite par tous les joueurs, en direct. Personne ne peut
-              l&apos;effacer : <strong>ce que tu poses t&apos;appartient pour de bon</strong>.
+              C&apos;est une grande carte collective : chaque joueur gagne ou achète des
+              cailloux, les place où il veut, et construit petit à petit une fresque
+              commune. Personne ne peut recouvrir ton caillou :
+              <strong> ce que tu poses t&apos;appartient pour de bon</strong>.
             </p>
             <ul className="pd-highlight-list">
-              <li>🎯 Des <strong>quêtes collectives</strong> : un objectif commun, une récompense pour tout le monde</li>
-              <li>💬 Un <strong>chat</strong> et des profils pour rencontrer les autres bâtisseurs</li>
-              <li>🔗 <strong>Partage un endroit précis</strong> de la carte en un clic</li>
+              <li>🗺️ Tu peux explorer la carte sans compte avant de jouer</li>
+              <li>🔍 Un clic sur un caillou affiche son propriétaire, son message et son site</li>
+              <li>🎯 Les quêtes collectives donnent des objectifs communs à toute la communauté</li>
             </ul>
           </div>
         </div>
@@ -563,6 +584,37 @@ function LandingStyles() {
       .pd-sub {
         color: #33443a; font-size: clamp(15px, 1.9vw, 17.5px); line-height: 1.65;
         max-width: 520px; margin: 0 0 20px;
+      }
+      .pd-sub strong { color: #17251c; font-weight: 900; }
+
+      .pd-concept-flow {
+        list-style: none; padding: 0; margin: 0 0 22px;
+        display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .pd-concept-flow li {
+        min-height: 96px;
+        display: grid; align-content: start; gap: 8px;
+        padding: 12px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(63, 125, 78, 0.24);
+        background: rgba(255, 255, 255, 0.72);
+      }
+      .pd-concept-flow strong {
+        width: 28px; height: 28px; border-radius: 999px;
+        display: grid; place-items: center;
+        background: var(--accent); color: #fff;
+        font-size: 14px; font-weight: 900;
+      }
+      .pd-concept-flow span {
+        color: #26382e;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+      @media (max-width: 700px) {
+        .pd-concept-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .pd-concept-flow li { min-height: 78px; }
       }
 
       .pd-stone-row { display: flex; gap: 7px; margin-bottom: 22px; flex-wrap: wrap; }
