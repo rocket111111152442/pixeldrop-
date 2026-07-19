@@ -4,6 +4,8 @@ import { TOTAL_PIXELS } from "@/lib/canvas-config";
 
 export const dynamic = "force-dynamic";
 
+const CHARITY_COUNTER_BASE_CTS = 12_800; // Le compteur public commence à 128 €.
+
 // Statistiques publiques : remplissage, joueurs, connectés, couleurs populaires.
 export async function GET() {
   const twoMinAgo = new Date(Date.now() - 2 * 60_000);
@@ -24,7 +26,7 @@ export async function GET() {
     }),
   ]);
   const paidRevenueCts = paidPurchases._sum.amountCts ?? 0;
-  const charityAmountCts = Math.round((paidRevenueCts * 5) / 100);
+  const charityAmountCts = CHARITY_COUNTER_BASE_CTS + Math.round((paidRevenueCts * 5) / 100);
 
   return NextResponse.json(
     {
