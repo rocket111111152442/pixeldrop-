@@ -537,6 +537,47 @@ canvas.pd-canvas {
 .toast.success { border-color: var(--accent); color: #235233; background: #e9f4ec; }
 .toast.gold { border-color: #c9922a; color: #6b4a08; background: #fdf3dd; }
 
+/* ── Retour de paiement : solde qui grimpe ── */
+.pd-credit-animation {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #f7faf4;
+  color: var(--accent);
+}
+.pd-credit-animation-inner {
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+}
+.pd-credit-animation-number {
+  font-size: clamp(68px, 19vw, 190px);
+  line-height: 0.9;
+  font-weight: 900;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  transform: translateZ(0);
+  animation: pdCreditBreathe 1.8s ease-in-out infinite;
+}
+.pd-credit-animation-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: pdCreditActionsIn 0.35s ease forwards;
+}
+@keyframes pdCreditBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes pdCreditActionsIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* ── Responsive ── */
 @media (max-width: 700px) {
   .pd-hide-sm { display: none !important; }
