@@ -1106,6 +1106,13 @@ export default function GameClient({ guest = false }: { guest?: boolean }) {
             <button className={sheetTab === "colors" ? "on" : ""} onClick={() => setSheetTab(sheetTab === "colors" ? null : "colors")}>🎨</button>
             <button className={sheetTab === "tools" ? "on" : ""} onClick={() => setSheetTab(sheetTab === "tools" ? null : "tools")}>🛠️</button>
             <button className={sheetTab === "options" ? "on" : ""} onClick={() => setSheetTab(sheetTab === "options" ? null : "options")}>⚙️</button>
+            {/* Solde de cailloux, visible en permanence pendant qu'on joue */}
+            <span
+              className={`pd-sheet-credits ${!isAdmin && (me.credits ?? 0) === 0 ? "empty" : ""}`}
+              title={isAdmin ? "Cailloux illimités (admin)" : "Tes cailloux restants"}
+            >
+              🪨 <strong>{isAdmin ? "∞" : me.credits}</strong>
+            </span>
             <span className="pd-sheet-cur" style={{ background: color }} title={color} />
             <span className="pd-sheet-tool">{TOOL_META[tool].emoji}</span>
           </div>
