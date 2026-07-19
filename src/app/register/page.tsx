@@ -64,7 +64,7 @@ function RegisterForm() {
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
-      setErr(data.error || "Erreur.");
+      setErr(data.error || `Erreur serveur (${r.status}).`);
       setBusy(false);
       return;
     }

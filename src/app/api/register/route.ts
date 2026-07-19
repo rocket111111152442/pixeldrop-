@@ -14,6 +14,21 @@ const REFERRAL_BONUS = 5;
 
 // Inscription email + mot de passe (avec code parrain optionnel).
 export async function POST(req: Request) {
+  try {
+    return await handleRegister(req);
+  } catch (e) {
+    console.error("register failed", redactError(e));
+    return NextResponse.json(
+      {
+        error:
+          "Erreur serveur pendant l'inscription. Réessaie dans un instant ou vérifie /api/health.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+async function handleRegister(req: Request) {
   if (!rateLimit(`register:${ipOf(req)}`, 5, 10 * 60_000)) return tooMany();
 
   const body = await req.json().catch(() => ({}));

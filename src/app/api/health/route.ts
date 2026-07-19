@@ -50,7 +50,9 @@ export async function GET() {
     database = { ok: false, tables: false, error: "DATABASE_URL manquant" };
   }
 
-  const ready = env.DATABASE_URL && env.AUTH_SECRET && database.ok && database.tables;
+  const schemaReady = database.tables && database.schemaVersion === "5";
+  const ready =
+    env.DATABASE_URL && env.AUTH_SECRET && database.ok && database.tables && schemaReady;
 
   const missing: string[] = [];
   if (!env.DATABASE_URL) missing.push("DATABASE_URL");
