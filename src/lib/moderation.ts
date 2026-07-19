@@ -131,6 +131,8 @@ const INSULT_TERMS = [
   "abruti",
   "batard",
   "bâtard",
+  "bete",
+  "bête",
   "boloss",
   "bouffon",
   "cas social",
@@ -138,6 +140,8 @@ const INSULT_TERMS = [
   "clochard",
   "con",
   "conne",
+  "couillon",
+  "couillonne",
   "connard",
   "connasse",
   "cretin",
@@ -158,6 +162,7 @@ const INSULT_TERMS = [
   "enclules",
   "ferme ta gueule",
   "fils de pute",
+  "fils2pute",
   "gogole",
   "gros con",
   "grosse merde",
@@ -168,6 +173,8 @@ const INSULT_TERMS = [
   "nique ta mere",
   "nique ta mère",
   "nique ta race",
+  "nik ta mere",
+  "nik ta mère",
   "ntm",
   "pd",
   "petasse",
@@ -181,6 +188,7 @@ const INSULT_TERMS = [
   "tocard",
   "trou du cul",
   "va te faire foutre",
+  "vtff",
 ];
 
 const INSULT_PATTERNS: { label: string; pattern: RegExp }[] = [
@@ -188,6 +196,63 @@ const INSULT_PATTERNS: { label: string; pattern: RegExp }[] = [
     label: "injure explicite",
     pattern: /(^|[^a-z0-9])enc(?:u|lu)l[a-z0-9]*($|[^a-z0-9])/i,
   },
+  {
+    label: "injure explicite",
+    pattern: /(^|[^a-z0-9])f(?:i|1)?l?s?[^a-z0-9]*d(?:e|2)?[^a-z0-9]*p(?:u|0)te?s?($|[^a-z0-9])/i,
+  },
+  {
+    label: "injure explicite",
+    pattern: /(^|[^a-z0-9])n(?:i|1)q(?:u|v)?e?[^a-z0-9]*ta[^a-z0-9]*(?:mere|race)($|[^a-z0-9])/i,
+  },
+];
+
+const COMPACT_INSULT_TERMS = [
+  "abruti",
+  "batard",
+  "boloss",
+  "bouffon",
+  "cassos",
+  "connard",
+  "connasse",
+  "couillon",
+  "debile",
+  "encule",
+  "enculer",
+  "encules",
+  "enculez",
+  "enculee",
+  "enclule",
+  "fdp",
+  "filsdepute",
+  "fils2pute",
+  "fermetagueule",
+  "gogole",
+  "groscon",
+  "grossemerde",
+  "imbecile",
+  "mangetesmorts",
+  "niquetamere",
+  "niquetarace",
+  "niktamere",
+  "ntm",
+  "petasse",
+  "poufiasse",
+  "salecon",
+  "salemerde",
+  "salepute",
+  "tagueule",
+  "tocard",
+  "trouducul",
+  "vatefairefoutre",
+  "vtff",
+];
+
+const COMPACT_INSULT_PATTERNS: { label: string; pattern: RegExp }[] = [
+  { label: "injure compacte", pattern: /encul[a-z0-9]*/i },
+  { label: "injure compacte", pattern: /enclul[a-z0-9]*/i },
+  { label: "injure compacte", pattern: /fils?d[e2]?putes?/i },
+  { label: "injure compacte", pattern: /ni?q[u]?e?ta(?:mere|race)/i },
+  { label: "injure compacte", pattern: /(?:sale|gros|grosse)?merdes?/i },
 ];
 
 function escapeRegExp(value: string): string {
@@ -218,6 +283,10 @@ function normalizeText(value: string): string {
     .trim();
 }
 
+function compactText(value: string): string {
+  return normalizeText(value).replace(/\s+/g, "");
+}
+
 function hasAny(haystack: string, terms: string[]): string | null {
   const loose = deobfuscateText(haystack);
   const normalized = normalizeText(haystack);
@@ -244,6 +313,37 @@ function hasPattern(haystack: string, patterns: { label: string; pattern: RegExp
   for (const item of patterns) {
     if (item.pattern.test(loose)) return item.label;
   }
+  return null;
+}
+
+function hasCompactAny(haystack: string, terms: string[]): string | null {
+  const compact = compactText(haystack);
+  for (const term of terms) {
+    const n = compactText(term);
+    if (!n) continue;
+    if (compact.includes(n)) return term;
+  }
+  return null;
+}
+
+function hasCompactPattern(
+  haystack: string,
+  patterns: { label: string; pattern: RegExp }[],
+) {
+  const compact = compactText(haystack);
+  for (const item of patterns) {
+    if (item.pattern.test(compact)) return item.label;
+  }
+  return null;
+}
+
+function hasShortInsultToken(haystack: string): string | null {
+  const normalized = ` ${normalizeText(haystack)} `;
+  const compact = compactText(haystack);
+  if (/(^| )f d p($| )/.test(normalized) || compact === "fdp") return "fdp";
+  if (/(^| )n t m($| )/.test(normalized) || compact === "ntm") return "ntm";
+  if (/(^| )t g($| )/.test(normalized) || compact === "tg") return "tg";
+  if (/(^| )p d($| )/.test(normalized) || compact === "pd") return "pd";
   return null;
 }
 
@@ -466,7 +566,12 @@ export function moderateContent(input: ModerationInput): ModerationVerdict {
     );
   }
 
-  const insult = hasAny(text, INSULT_TERMS) || hasPattern(text, INSULT_PATTERNS);
+  const insult =
+    hasAny(text, INSULT_TERMS) ||
+    hasPattern(text, INSULT_PATTERNS) ||
+    hasCompactAny(text, COMPACT_INSULT_TERMS) ||
+    hasCompactPattern(text, COMPACT_INSULT_PATTERNS) ||
+    hasShortInsultToken(text);
   if (insult) {
     out = strongest(
       out,
@@ -494,7 +599,7 @@ export function moderateContent(input: ModerationInput): ModerationVerdict {
   return out;
 }
 
-export async function moderateVisibleChatMessages(limit = 100) {
+export async function moderateVisibleChatMessages(limit = 500) {
   const messages = await prisma.chatMessage.findMany({
     where: { deletedAt: null },
     orderBy: { createdAt: "desc" },
