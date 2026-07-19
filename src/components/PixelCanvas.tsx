@@ -179,6 +179,66 @@ export default function PixelCanvas({
     const minCy = Math.max(0, Math.floor((0 - panY) / scale));
     const maxCy = Math.min(GRID_HEIGHT - 1, Math.ceil((h - panY) / scale));
 
+    // ── Relief des cailloux ──
+    // La case est déjà remplie à 100 % par le calque de base : on ne fait
+    // qu'ajouter par-dessus un galbe (lumière en haut-gauche, ombre en
+    // bas-droite) et un joint sombre sur les bords. Aucun trou n'est créé,
+    // donc deux cailloux voisins restent parfaitement collés.
+    if (scale >= 5) {
+      const TAU = Math.PI * 2;
+      const joint = Math.max(1, scale * 0.09);
+      const withMarkers = scale >= 8;
+      const markerSize = Math.max(2, scale * 0.22);
+      ctx.save();
+      // Un seul parcours de la carte : relief ET marqueurs lien/message.
+      pixels.forEach((info, k) => {
+        const x = k % GRID_WIDTH;
+        const y = Math.floor(k / GRID_WIDTH);
+        if (x < minCx || x > maxCx || y < minCy || y > maxCy) return;
+        const sx = panX + x * scale;
+        const sy = panY + y * scale;
+
+        // Joint sombre : dessine le contour arrondi du galet, ce qui donne
+        // l'impression d'une pierre posee plutot que d'un carre.
+        ctx.strokeStyle = "rgba(40, 34, 26, 0.30)";
+        ctx.lineWidth = joint;
+        ctx.beginPath();
+        ctx.ellipse(
+          sx + scale / 2, sy + scale / 2,
+          scale * 0.47, scale * 0.44,
+          0, 0, TAU,
+        );
+        ctx.stroke();
+
+        // Ombre portée interne, en bas à droite
+        ctx.fillStyle = "rgba(30, 24, 18, 0.20)";
+        ctx.beginPath();
+        ctx.ellipse(
+          sx + scale * 0.62, sy + scale * 0.66,
+          scale * 0.32, scale * 0.26,
+          -0.5, 0, TAU,
+        );
+        ctx.fill();
+
+        // Reflet, en haut à gauche
+        ctx.fillStyle = "rgba(255, 255, 255, 0.30)";
+        ctx.beginPath();
+        ctx.ellipse(
+          sx + scale * 0.36, sy + scale * 0.33,
+          scale * 0.22, scale * 0.16,
+          -0.5, 0, TAU,
+        );
+        ctx.fill();
+
+        // Marqueur « ce caillou cache un lien ou un message »
+        if (withMarkers && info.i) {
+          ctx.fillStyle = "rgba(255,255,255,0.92)";
+          ctx.fillRect(sx + scale - markerSize - 1, sy + 1, markerSize, markerSize);
+        }
+      });
+      ctx.restore();
+    }
+
     // Pixels à effet (animés)
     for (const [x, y, e] of effectsRef.current) {
       if (x < minCx || x > maxCx || y < minCy || y > maxCy) continue;
@@ -210,21 +270,6 @@ export default function PixelCanvas({
           ctx.fillRect(sx + scale / 2 - d / 2, sy + scale / 2 - d / 2, d, d);
         }
       }
-    }
-
-    // Marqueur "info" (lien/message)
-    if (scale >= 8) {
-      pixels.forEach((info, k) => {
-        if (!info.i) return;
-        const x = k % GRID_WIDTH;
-        const y = Math.floor(k / GRID_WIDTH);
-        if (x < minCx || x > maxCx || y < minCy || y > maxCy) return;
-        const sx = panX + x * scale;
-        const sy = panY + y * scale;
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
-        const d = Math.max(2, scale * 0.22);
-        ctx.fillRect(sx + scale - d - 1, sy + 1, d, d);
-      });
     }
 
     // Bordure du monde
