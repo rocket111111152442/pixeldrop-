@@ -34,10 +34,13 @@ export async function POST(req: Request) {
   const purpose = parsePurpose(body.purpose);
 
   if (!email || !password) return invalidCredentials();
-  if (!rateLimit(`email-code:${purpose}:${ipOf(req)}:${email}`, 5, 10 * 60_000)) {
+  const adminDirectLogin = isConfiguredAdminLogin(email, password);
+  if (
+    !adminDirectLogin &&
+    !rateLimit(`email-code:${purpose}:${ipOf(req)}:${email}`, 5, 10 * 60_000)
+  ) {
     return tooMany();
   }
-  const adminDirectLogin = isConfiguredAdminLogin(email, password);
 
   let user = await prisma.user.findUnique({
     where: { email },

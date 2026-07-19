@@ -66,7 +66,12 @@ providers.push(
       const emailCode = String(credentials?.emailCode || "");
       const adminDirectLogin = isConfiguredAdminLogin(email, password);
       if (!email || !password) return null;
-      if (!rateLimit(`login:${ipOf(request)}:${email}`, 10, 15 * 60_000)) return null;
+      if (
+        !adminDirectLogin &&
+        !rateLimit(`login:${ipOf(request)}:${email}`, 10, 15 * 60_000)
+      ) {
+        return null;
+      }
 
       let user = await prisma.user.findUnique({
         where: { email },
