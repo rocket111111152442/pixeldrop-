@@ -68,7 +68,17 @@ providers.push(
       if (!email || !password) return null;
       if (!rateLimit(`login:${ipOf(request)}:${email}`, 10, 15 * 60_000)) return null;
 
-      let user = await prisma.user.findUnique({ where: { email } });
+      let user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          image: true,
+          hashedPassword: true,
+          emailVerified: true,
+        },
+      });
       if (!user || !user.hashedPassword) {
         user = await ensureConfiguredAdminUser(email, password);
       }

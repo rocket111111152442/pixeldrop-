@@ -19,25 +19,27 @@ export async function ensureConfiguredAdminUser(email: string, password: string)
   if (!isConfiguredAdminLogin(email, password)) return null;
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const safeUserSelect = {
+    id: true,
+    email: true,
+    name: true,
+    image: true,
+    hashedPassword: true,
+    emailVerified: true,
+  } as const;
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
   if (existing) {
     return prisma.user.update({
       where: { email },
+      select: safeUserSelect,
       data: {
         hashedPassword,
         isAdmin: true,
         emailVerified: new Date(),
         banned: false,
-        banExpiresAt: null,
-        banReason: null,
-        banCategory: null,
-        banSource: null,
-        banSeverity: null,
-        banAppealDeadline: null,
-        banAppealText: null,
-        banAppealedAt: null,
-        banAppealStatus: "none",
-        banDeleteAfter: null,
       },
     });
   }
@@ -49,6 +51,7 @@ export async function ensureConfiguredAdminUser(email: string, password: string)
   }
 
   return prisma.user.create({
+    select: safeUserSelect,
     data: {
       email,
       hashedPassword,

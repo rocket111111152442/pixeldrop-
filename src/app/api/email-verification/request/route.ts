@@ -37,15 +37,14 @@ export async function POST(req: Request) {
   if (!rateLimit(`email-code:${purpose}:${ipOf(req)}:${email}`, 5, 10 * 60_000)) {
     return tooMany();
   }
-  if (!isMailConfigured()) {
-    return NextResponse.json(
-      { error: "L'envoi d'email n'est pas encore configure." },
-      { status: 503 },
-    );
-  }
+  const adminDirectLogin = isConfiguredAdminLogin(email, password);
 
   let user = await prisma.user.findUnique({
     where: { email },
+    select: {
+      hashedPassword: true,
+      emailVerified: true,
+    },
   });
   if (!user?.hashedPassword) {
     user = await ensureConfiguredAdminUser(email, password);
@@ -65,11 +64,18 @@ export async function POST(req: Request) {
     );
   }
 
-  if (isConfiguredAdminLogin(email, password)) {
+  if (adminDirectLogin) {
     return NextResponse.json({
       ok: true,
       adminDirect: true,
     });
+  }
+
+  if (!isMailConfigured()) {
+    return NextResponse.json(
+      { error: "L'envoi d'email n'est pas encore configure." },
+      { status: 503 },
+    );
   }
 
   try {

@@ -14,7 +14,7 @@ if (!process.env.DATABASE_URL) {
 let schemaOk = false;
 try {
   console.log("[db-setup] Application du schéma (prisma db push)…");
-  execSync("npx prisma db push --skip-generate", { stdio: "inherit" });
+  execSync("npx prisma db push", { stdio: "inherit" });
   console.log("[db-setup] Tables à jour.");
   schemaOk = true;
 } catch (err) {
