@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { redactError } from "@/lib/security";
+import { isMailConfigured } from "@/lib/mailer";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,9 @@ export async function GET() {
     stripe: !!process.env.STRIPE_SECRET_KEY,
     stripeWebhook: !!process.env.STRIPE_WEBHOOK_SECRET,
     adminEmailSet: !!process.env.ADMIN_EMAIL,
+    // Envoi d'emails (codes de vérification) : identifiants SMTP présents ?
+    mail: isMailConfigured(),
+    mailHost: process.env.SMTP_HOST || (isMailConfigured() ? "smtp.gmail.com" : null),
   };
 
   let database: { ok: boolean; tables: boolean; schemaVersion?: string; error?: string } = {
