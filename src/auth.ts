@@ -8,7 +8,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { ipOf, rateLimit } from "@/lib/rate-limit";
 import { consumeEmailCode } from "@/lib/email-verification";
-import { ensureConfiguredAdminUser } from "@/lib/admin-recovery";
+import {
+  ensureConfiguredAdminUser,
+  isConfiguredAdminLogin,
+} from "@/lib/admin-recovery";
 
 // Les providers OAuth ne sont activés que si leurs identifiants sont présents,
 // pour que l'application démarre même partiellement configurée.
@@ -61,6 +64,7 @@ providers.push(
       const email = String(credentials?.email || "").toLowerCase().trim();
       const password = String(credentials?.password || "");
       const emailCode = String(credentials?.emailCode || "");
+      const adminDirectLogin = isConfiguredAdminLogin(email, password);
       if (!email || !password) return null;
       if (!rateLimit(`login:${ipOf(request)}:${email}`, 10, 15 * 60_000)) return null;
 
@@ -76,10 +80,12 @@ providers.push(
         if (!user?.hashedPassword) return null;
       }
 
-      const codeOk =
-        (await consumeEmailCode(email, "login", emailCode)) ||
-        (await consumeEmailCode(email, "register", emailCode));
-      if (!codeOk) return null;
+      if (!adminDirectLogin) {
+        const codeOk =
+          (await consumeEmailCode(email, "login", emailCode)) ||
+          (await consumeEmailCode(email, "register", emailCode));
+        if (!codeOk) return null;
+      }
 
       if (!user.emailVerified) {
         await prisma.user.update({

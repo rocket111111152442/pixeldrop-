@@ -44,6 +44,21 @@ export default function LoginPage() {
       setErr(data.error || "Email ou mot de passe incorrect.");
       return;
     }
+    if (data.adminDirect) {
+      setBusy(true);
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      setBusy(false);
+      if (res?.error) {
+        setErr("Identifiants admin incorrects.");
+        return;
+      }
+      router.push("/admin");
+      return;
+    }
     setStep("code");
     setNotice(
       `Code envoyé à ${email}. Il expire dans ${data.expiresInMinutes || 10} minutes.`,

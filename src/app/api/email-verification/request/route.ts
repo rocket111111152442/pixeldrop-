@@ -9,7 +9,10 @@ import {
   type EmailVerificationPurpose,
 } from "@/lib/email-verification";
 import { ipOf, rateLimit, tooMany } from "@/lib/rate-limit";
-import { ensureConfiguredAdminUser } from "@/lib/admin-recovery";
+import {
+  ensureConfiguredAdminUser,
+  isConfiguredAdminLogin,
+} from "@/lib/admin-recovery";
 
 export const runtime = "nodejs";
 
@@ -60,6 +63,13 @@ export async function POST(req: Request) {
       { error: "Cette adresse est deja verifiee. Connecte-toi directement." },
       { status: 409 },
     );
+  }
+
+  if (isConfiguredAdminLogin(email, password)) {
+    return NextResponse.json({
+      ok: true,
+      adminDirect: true,
+    });
   }
 
   try {
