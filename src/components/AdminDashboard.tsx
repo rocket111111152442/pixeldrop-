@@ -212,6 +212,42 @@ export default function AdminDashboard() {
     post("/api/admin/users", { userId: u.id }, "DELETE");
   };
 
+  // Vidage complet de la carte : irréversible, donc double confirmation
+  // (choix du remboursement, puis saisie exacte d'une phrase).
+  const resetMap = async () => {
+    const posed = stats?.pixelCount ?? 0;
+    if (posed === 0) {
+      setMsg("La carte est déjà vide.");
+      return;
+    }
+    const refund = confirm(
+      `Vider la carte va supprimer ${posed.toLocaleString("fr-FR")} caillou(x).\n\n` +
+        "OK  = rembourser les joueurs (chacun récupère autant de cailloux qu'il en avait posés)\n" +
+        "Annuler = ne rien rembourser",
+    );
+    const typed = prompt(
+      "Dernière étape. Écris exactement :\n\nVIDER LA CARTE",
+      "",
+    );
+    if (!typed) return;
+
+    const r = await fetch("/api/admin/reset-map", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: typed, refund }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      setMsg(d.error || "Erreur");
+      return;
+    }
+    setMsg(
+      `💥 Carte vidée : ${d.total} caillou(x) supprimé(s)` +
+        (d.refunded ? ` · ${d.refunded} recrédité(s) à ${d.players} joueur(s)` : " · aucun remboursement"),
+    );
+    load();
+  };
+
   const filtered = users.filter(
     (u) =>
       !search ||
@@ -310,6 +346,33 @@ export default function AdminDashboard() {
               📥 Export CSV des comptes
             </a>
             <button className="pd-btn" onClick={load}>🔄 Rafraîchir</button>
+          </div>
+
+          {/* ── Zone dangereuse ── */}
+          <div
+            style={{
+              marginTop: 18,
+              border: "2px solid #c2261a",
+              borderRadius: 14,
+              padding: 16,
+              background: "#fdf3f2",
+            }}
+          >
+            <div style={{ fontWeight: 800, color: "#8e2318", marginBottom: 6 }}>
+              ⚠️ Zone dangereuse
+            </div>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "#5b2a24" }}>
+              Vider la carte supprime <strong>tous les cailloux de tous les joueurs</strong>,
+              définitivement. Cette action est <strong>irréversible</strong> : il n&apos;y a
+              ni sauvegarde, ni retour en arrière.
+            </p>
+            <button
+              className="pd-btn"
+              style={{ borderColor: "#c2261a", color: "#8e2318", fontWeight: 700 }}
+              onClick={resetMap}
+            >
+              💥 Vider entièrement la carte
+            </button>
           </div>
         </>
       )}
