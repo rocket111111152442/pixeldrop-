@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
@@ -17,8 +17,9 @@ const ERROR_LABELS: Record<string, string> = {
   Verification: "Lien expiré, réessaie.",
 };
 
-const EUR = (cts: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(cts / 100);
+const MONEY = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const EUR = (cts: number) => MONEY.format(cts / 100);
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 // Nuances de cailloux montrées dans le héros (clair → foncé).
 const DEMO_STONES = [
@@ -39,6 +40,7 @@ export default function Landing() {
         <span className="pd-give-pill">
           ❤️ L&apos;argent des achats part à une association caritative
         </span>
+        <CharityCounter />
       </div>
 
       {/* ── Barre du haut ── */}
@@ -313,6 +315,64 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
   );
 }
 
+function CharityCounter() {
+  const [amountCts, setAmountCts] = useState<number | null>(null);
+  const [displayCts, setDisplayCts] = useState(0);
+  const displayRef = useRef(0);
+
+  useEffect(() => {
+    let alive = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const load = async () => {
+      try {
+        const r = await fetch("/api/stats", { cache: "no-store" });
+        if (!r.ok) return;
+        const data = await r.json();
+        const next = Number(data.charityAmountCts);
+        if (alive && Number.isFinite(next)) setAmountCts(Math.max(0, Math.round(next)));
+      } catch {
+        /* ignore */
+      }
+    };
+
+    load();
+    timer = setInterval(load, 10_000);
+    return () => {
+      alive = false;
+      if (timer) clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (amountCts === null) return;
+
+    let frame = 0;
+    const from = displayRef.current;
+    const to = amountCts;
+    const startedAt = performance.now();
+    const duration = 900;
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const value = Math.round(from + (to - from) * easeOutCubic(progress));
+      displayRef.current = value;
+      setDisplayCts(value);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [amountCts]);
+
+  return (
+    <div className="pd-give-meter" aria-live="polite">
+      <span>Argent reversé aux associations caritatives</span>
+      <strong>{amountCts === null ? "..." : EUR(displayCts)}</strong>
+    </div>
+  );
+}
+
 function SignInCard() {
   const router = useRouter();
   const [providers, setProviders] = useState<Record<string, unknown>>({});
@@ -416,13 +476,40 @@ function LandingStyles() {
       .pd-nav, .pd-hero, .pd-section, .pd-final, .pd-foot, .pd-give-bar { position: relative; z-index: 1; }
 
       /* Bandeau + encart engagement caritatif */
-      .pd-give-bar { display: flex; justify-content: center; padding: 10px 16px 0; }
+      .pd-give-bar {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 10px; padding: 10px 16px 0;
+      }
       .pd-give-pill {
         display: inline-flex; align-items: center; gap: 8px;
         padding: 8px 18px; border-radius: 999px;
         background: linear-gradient(135deg, #e8452f, #c2261a);
         color: #fff; font-weight: 800; font-size: 13.5px; text-align: center;
         box-shadow: 0 6px 18px rgba(194, 38, 26, 0.28);
+      }
+      .pd-give-meter {
+        width: min(92vw, 420px);
+        display: grid; justify-items: center; gap: 2px;
+        padding: 11px 16px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(194, 38, 26, 0.22);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 8px 24px rgba(194, 38, 26, 0.13);
+        backdrop-filter: blur(6px);
+      }
+      .pd-give-meter span {
+        color: #703126;
+        font-size: 12px;
+        font-weight: 800;
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .pd-give-meter strong {
+        color: #c2261a;
+        font-size: clamp(28px, 6vw, 42px);
+        line-height: 1;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
       }
       .pd-give {
         display: flex; gap: 22px; align-items: center; flex-wrap: wrap;
