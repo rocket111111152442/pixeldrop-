@@ -196,6 +196,22 @@ export default function AdminDashboard() {
     post("/api/admin/grant", { userId: u.id, itemSku: sku, itemQty: n });
   };
 
+  const toggleAdmin = (u: AdminUser) => {
+    const next = !u.isAdmin;
+    const label = next ? "passer admin" : "retirer le rôle admin";
+    if (!confirm(`${label} pour ${u.pseudo} ?`)) return;
+    post("/api/admin/users", { userId: u.id, isAdmin: next }, "PATCH");
+  };
+
+  const deleteAccount = (u: AdminUser) => {
+    const typed = prompt(
+      `Supprimer définitivement le compte ${u.pseudo} ?\nSes pixels resteront sur la carte en anonyme.\nÉcris SUPPRIMER pour confirmer.`,
+      "",
+    );
+    if (typed !== "SUPPRIMER") return;
+    post("/api/admin/users", { userId: u.id }, "DELETE");
+  };
+
   const filtered = users.filter(
     (u) =>
       !search ||
@@ -348,6 +364,13 @@ export default function AdminDashboard() {
                       <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                         <button className="pd-btn pd-mini" onClick={() => grantCredits(u)}>+ pixels</button>
                         <button className="pd-btn pd-mini" onClick={() => grantItem(u)}>+ item</button>
+                        <button
+                          className="pd-btn pd-mini"
+                          style={{ borderColor: u.isAdmin ? "#ffd166" : "#37d67a" }}
+                          onClick={() => toggleAdmin(u)}
+                        >
+                          {u.isAdmin ? "retirer admin" : "passer admin"}
+                        </button>
                         {!u.isAdmin && (
                           <>
                             <button
@@ -368,6 +391,13 @@ export default function AdminDashboard() {
                             </button>
                           </>
                         )}
+                        <button
+                          className="pd-btn pd-mini"
+                          style={{ borderColor: "#ff5c7a" }}
+                          onClick={() => deleteAccount(u)}
+                        >
+                          supprimer
+                        </button>
                       </div>
                     </td>
                   </tr>
